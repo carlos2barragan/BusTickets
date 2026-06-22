@@ -46,9 +46,9 @@ namespace Busticket.Controllers
                 .Take(5)
                 .Select(b => new ViajeViewModel
                 {
-                    Origen = b.Ruta.CiudadOrigen.Nombre,
+                    Origen  = b.Ruta.CiudadOrigen.Nombre,
                     Destino = b.Ruta.CiudadDestino.Nombre,
-                    
+                    Fecha   = b.Ruta.FechaSalida,
                 })
                 .ToListAsync();
 

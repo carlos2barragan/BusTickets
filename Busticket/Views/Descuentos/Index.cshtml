@@ -11,43 +11,15 @@
     <meta charset="UTF-8">
     <title>Descuentos - Busticket</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body class="bg-gray-50 font-sans">
 
-    <!-- HEADER -->
-    <header class="py-6 bg-white shadow-sm">
-        <div class="w-[95%] max-w-[1400px] mx-auto flex items-center justify-between">
-
-            <div class="text-3xl font-extrabold text-[#284D67] cursor-pointer">
-                <a href="/Home/Index">Busticket</a>
-            </div>
-
-            <nav class="flex gap-12">
-                <a href="/Itinerarios/Index" class="text-base font-medium text-gray-600 hover:text-[#002C53] transition">
-                    Destinos
-                </a>
-                <a href="/Planes/Index" class="text-base font-medium text-gray-600 hover:text-[#002C53] transition">
-                    Planes
-                </a>
-                <a href="/Descuentos/Index" class="text-base font-bold text-[#002C53]">
-                    Descuentos
-                </a>
-            </nav>
-
-            <div class="flex items-center">
-                <img class="w-7 ml-4 cursor-pointer hover:opacity-80"
-                     src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' fill='%23284D67' viewBox='0 0 24 24'><path d='M7 18c-1.104 0-2 .897-2 2 0 1.102.896 2 2 2 1.103 0 2-.898 2-2 0-1.103-.897-2-2-2zm10 0c-1.104 0-2 .897-2 2 0 1.102.896 2 2 2 1.103 0 2-.898 2-2 0-1.103-.897-2-2-2zM7.334 14h9.744c.83 0 1.553-.52 1.836-1.289l2.734-7.318A1 1 0 0 0 20.7 4H5.21l-.94-2.265A1 1 0 0 0 3.355 1H1v2h1.611l3.598 8.643-1.35 2.835A2 2 0 0 0 6.666 17H19v-2H7.334l1-1z'/></svg>" />
-
-                <img class="w-7 ml-4 cursor-pointer hover:opacity-80"
-                     src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' fill='%23284D67' viewBox='0 0 24 24'><path d='M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5zm0 2c-3.314 0-10 1.657-10 5v3h20v-3c0-3.343-6.686-5-10-5z'/></svg>" />
-            </div>
-
-        </div>
-    </header>
+    <partial name="_SharedHeader" />
 
     <!-- CONTENIDO -->
-    <main class="w-[90%] max-w-[1400px] mx-auto mt-12 mb-20">
+    <main class="w-[90%] max-w-[1400px] mx-auto pt-28 pb-10">
 
         <div class="mb-10">
             <h2 class="text-3xl font-black text-[#284D67]">Ofertas disponibles</h2>

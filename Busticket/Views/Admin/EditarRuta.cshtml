@@ -1,190 +1,114 @@
-﻿@model Busticket.Models.Ruta
+@model Busticket.Models.Ruta
 @{
-    Layout = "_Layout";
+    Layout = null;
 }
-<!-- HEADER -->
-<header class="absolute top-0 inset-x-0 z-50">
-    <div class="max-w-7xl mx-auto px-10 py-6
-                flex items-center justify-between
-                text-black">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Busticket | Editar Ruta</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-[#f7f8fa] text-gray-800">
+<partial name="_SharedHeader" />
+<main class="max-w-screen-lg mx-auto px-4 sm:px-6 lg:px-10 pt-28 pb-16">
 
-        <!-- IZQUIERDA -->
-        <div class="flex items-center gap-6">
+    <div class="max-w-2xl mx-auto">
+        <!-- Back link -->
+        <a asp-controller="Admin" asp-action="Rutas"
+           class="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Volver a Rutas
+        </a>
 
-            <!-- BOTÓN VOLVER -->
-            @if (Context.Request.Path != "/Home/Index")
-            {
-                <button onclick="history.back()"
-                        class="flex items-center gap-2 text-sm tracking-widest uppercase
-                                   opacity-80 hover:opacity-100 transition group">
+        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sm:p-8">
+            <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-6">Admin / Rutas</p>
+            <h1 class="text-2xl font-bold text-gray-900 mb-8">Editar ruta</h1>
 
-                    <!-- ICONO FLECHA SVG -->
-                    <svg xmlns="http://www.w3.org/2000/svg"
-                         class="w-5 h-5 transform group-hover:-translate-x-1 transition duration-300"
-                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M15 19l-7-7 7-7" />
-                    </svg>
+            <form asp-controller="Admin" asp-action="EditarRuta" method="post" class="space-y-5">
+                <input type="hidden" asp-for="RutaId" />
+                <div asp-validation-summary="All" class="text-red-500 text-xs mb-2"></div>
 
-                    Volver
-                </button>
-            }
+                <!-- Ciudad Origen -->
+                <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">Ciudad Origen</label>
+                    <select asp-for="CiudadOrigenId"
+                            class="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition"
+                            asp-items="@(new SelectList(ViewBag.Ciudades ?? new List<Busticket.Models.Ciudad>(), "CiudadId", "Nombre", Model?.CiudadOrigenId))">
+                        <option value="0">-- Seleccione Ciudad --</option>
+                    </select>
+                    <span asp-validation-for="CiudadOrigenId" class="text-red-500 text-xs mt-1"></span>
+                </div>
 
-            <!-- LOGO -->
-            <a href="/Home/Index"
-               class="text-2xl tracking-widest uppercase font-semibold">
-                Busticket
-            </a>
+                <!-- Ciudad Destino -->
+                <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">Ciudad Destino</label>
+                    <select asp-for="CiudadDestinoId"
+                            class="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition"
+                            asp-items="@(new SelectList(ViewBag.Ciudades ?? new List<Busticket.Models.Ciudad>(), "CiudadId", "Nombre", Model?.CiudadDestinoId))">
+                        <option value="0">-- Seleccione Ciudad --</option>
+                    </select>
+                    <span asp-validation-for="CiudadDestinoId" class="text-red-500 text-xs mt-1"></span>
+                </div>
 
-        </div>
+                <!-- Empresa -->
+                <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">Empresa</label>
+                    <select asp-for="EmpresaId"
+                            class="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition"
+                            asp-items="@(new SelectList(ViewBag.Empresas ?? new List<Busticket.Models.Empresa>(), "EmpresaId", "Nombre", Model?.EmpresaId))">
+                        <option value="0">-- Seleccione Empresa --</option>
+                    </select>
+                    <span asp-validation-for="EmpresaId" class="text-red-500 text-xs mt-1"></span>
+                </div>
 
-        <!-- DERECHA -->
-        <div class="flex gap-10 text-sm tracking-widest uppercase items-center">
+                <!-- Precio -->
+                <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">Precio</label>
+                    <input asp-for="Precio"
+                           type="number"
+                           step="0.01"
+                           min="0.01"
+                           class="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition" />
+                    <span asp-validation-for="Precio" class="text-red-500 text-xs mt-1"></span>
+                </div>
 
-            <!-- AYUDA -->
-            <a href="/Ayuda"
-               class="relative
-                      after:content-[''] after:absolute after:left-0 after:-bottom-1
-                      after:w-0 after:h-[1px] after:bg-black
-                      after:transition-all after:duration-300
-                      hover:after:w-full">
-                Ayuda
-            </a>
+                <!-- Duración -->
+                <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">Duración (minutos)</label>
+                    <input asp-for="DuracionMin"
+                           type="number"
+                           min="1"
+                           class="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition" />
+                    <span asp-validation-for="DuracionMin" class="text-red-500 text-xs mt-1"></span>
+                </div>
 
-            @if (User.Identity != null && User.Identity.IsAuthenticated)
-            {
-                <!-- PERFIL -->
-                <a href="/Perfil"
-                   title="Mi cuenta"
-                   class="flex items-center justify-center w-10 h-10
-                              rounded-full border border-black
-                              hover:bg-black hover:text-white transition">
-                    👤
-                </a>
-
-                <!-- LOGOUT -->
-                <form asp-controller="Auth"
-                      asp-action="Logout"
-                      method="post"
-                      class="inline">
+                <div class="pt-2 space-y-3">
                     <button type="submit"
-                            class="relative
-                                       after:content-[''] after:absolute after:left-0 after:-bottom-1
-                                       after:w-0 after:h-[1px] after:bg-black
-                                       after:transition-all after:duration-300
-                                       hover:after:w-full">
-                        Cerrar sesión
+                            class="w-full bg-gray-900 text-white py-3 rounded-2xl text-sm font-semibold hover:bg-indigo-600 transition-colors duration-200">
+                        Actualizar Ruta
                     </button>
-                </form>
-            }
-            else
-            {
-                <!-- LOGIN -->
-                <a href="/Auth/Login"
-                   class="relative
-                              after:content-[''] after:absolute after:left-0 after:-bottom-1
-                              after:w-0 after:h-[1px] after:bg-black
-                              after:transition-all after:duration-300
-                              hover:after:w-full">
-                    Iniciar sesión
-                </a>
-            }
-
-            @if (User.IsInRole("Admin"))
-            {
-                <a href="/Admin/Index"
-                   class="relative
-                              after:content-[''] after:absolute after:left-0 after:-bottom-1
-                              after:w-0 after:h-[1px] after:bg-black
-                              after:transition-all after:duration-300
-                              hover:after:w-full">
-                    Admin
-                </a>
-            }
-
-            @if (User.IsInRole("Empresa"))
-            {
-                <a href="/Empresa/Dashboard"
-                   class="relative
-                              after:content-[''] after:absolute after:left-0 after:-bottom-1
-                              after:w-0 after:h-[1px] after:bg-black
-                              after:transition-all after:duration-300
-                              hover:after:w-full">
-                    Empresa
-                </a>
-            }
-
+                    <a asp-controller="Admin" asp-action="Rutas"
+                       class="flex items-center justify-center w-full border border-gray-200 text-gray-600 py-3 rounded-2xl text-sm font-medium hover:bg-gray-50 transition-colors">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
         </div>
     </div>
-</header>
-<div class="max-w-3xl mx-auto mt-10 bg-white p-6 rounded-xl shadow-md">
-    <h1 class="text-3xl font-bold mb-6">Editar Ruta</h1>
 
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="text-red-600 mb-2">@TempData["ErrorMessage"]</div>
-    }
-
-    <form asp-controller="Admin" asp-action="EditarRuta" method="post" class="space-y-4">
-        <input type="hidden" asp-for="RutaId" />
-
-        <!-- Ciudad Origen -->
-        <div>
-            <label>Ciudad Origen</label>
-            <select asp-for="CiudadOrigenId" class="w-full border border-gray-300 rounded-lg px-3 py-2"
-                    asp-items="@(new SelectList(ViewBag.Ciudades ?? new List<Busticket.Models.Ciudad>(), "CiudadId", "Nombre", Model?.CiudadOrigenId))">
-                <option value="0">-- Seleccione Ciudad --</option>
-            </select>
-            <span asp-validation-for="CiudadOrigenId" class="text-red-600"></span>
-        </div>
-
-        <!-- Ciudad Destino -->
-        <div>
-            <label>Ciudad Destino</label>
-            <select asp-for="CiudadDestinoId" class="w-full border border-gray-300 rounded-lg px-3 py-2"
-                    asp-items="@(new SelectList(ViewBag.Ciudades ?? new List<Busticket.Models.Ciudad>(), "CiudadId", "Nombre", Model?.CiudadDestinoId))">
-                <option value="0">-- Seleccione Ciudad --</option>
-            </select>
-            <span asp-validation-for="CiudadDestinoId" class="text-red-600"></span>
-        </div>
-
-        <!-- Empresa -->
-        <div>
-            <label>Empresa</label>
-            <select asp-for="EmpresaId" class="w-full border border-gray-300 rounded-lg px-3 py-2"
-                    asp-items="@(new SelectList(ViewBag.Empresas ?? new List<Busticket.Models.Empresa>(), "EmpresaId", "Nombre", Model?.EmpresaId))">
-                <option value="0">-- Seleccione Empresa --</option>
-            </select>
-            <span asp-validation-for="EmpresaId" class="text-red-600"></span>
-        </div>
-
-        <!-- Precio -->
-        <div>
-            <label>Precio</label>
-            <input asp-for="Precio" type="number" step="0.01" min="0.01" class="w-full border border-gray-300 rounded px-3 py-2" />
-            <span asp-validation-for="Precio" class="text-red-600"></span>
-        </div>
-
-        <!-- Duración -->
-        <div>
-            <label>Duración (min)</label>
-            <input asp-for="DuracionMin" type="number" min="1" class="w-full border border-gray-300 rounded px-3 py-2" />
-            <span asp-validation-for="DuracionMin" class="text-red-600"></span>
-        </div>
-
-        <button type="submit" class="bg-blue-600 text-white px-5 py-2 rounded-lg">Actualizar</button>
-    </form>
-</div>
-
-@section Scripts {
-    @await Html.PartialAsync("_ValidationScriptsPartial")
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const success = '@TempData["SuccessMessage"]';
-            const error = '@TempData["ErrorMessage"]';
-            if (success) Swal.fire('Éxito', success, 'success');
-            if (error) Swal.fire('Error', error, 'error');
-        });
-    </script>
-}
+</main>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const success = '@TempData["SuccessMessage"]';
+        const error   = '@TempData["ErrorMessage"]';
+        if (success && success.trim()) Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: success, showConfirmButton: false, timer: 2500 });
+        if (error   && error.trim())   Swal.fire({ toast: true, position: 'top-end', icon: 'error',   title: error,   showConfirmButton: false, timer: 3000 });
+    });
+</script>
+</body>
+</html>

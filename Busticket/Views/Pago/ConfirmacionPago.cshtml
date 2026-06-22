@@ -1,4 +1,4 @@
-﻿@model Busticket.Models.Venta
+@model Busticket.Models.Venta
 
 @{
     ViewBag.Title = "Pago confirmado";
@@ -10,43 +10,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Busticket | Compra confirmada</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <title>Compra realizada</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+
+        @@keyframes scaleIn {
+            from { opacity: 0; transform: scale(.85); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+        @@keyframes checkDraw {
+            from { stroke-dashoffset: 60; }
+            to   { stroke-dashoffset: 0; }
+        }
+        @@keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-in  { animation: scaleIn .45s cubic-bezier(.25,.8,.25,1) both; }
+        .check-draw { stroke-dasharray: 60; animation: checkDraw .5s .4s ease-out forwards; stroke-dashoffset: 60; }
+        .fade-up-1 { animation: fadeUp .5s .55s ease-out both; }
+        .fade-up-2 { animation: fadeUp .5s .7s  ease-out both; }
+        .fade-up-3 { animation: fadeUp .5s .85s ease-out both; }
+    </style>
 </head>
 
-<body class="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+<body class="min-h-screen bg-[#f7f8fa] flex items-center justify-center px-4 py-16">
 
-    <div class="bg-white w-full max-w-md sm:max-w-lg
-                p-6 sm:p-10
-                rounded-2xl shadow-xl
-                text-center
-                animate-fade">
+    <div class="card-in bg-white rounded-3xl shadow-xl border border-gray-100
+                w-full max-w-md p-10 text-center">
 
-        <h1 class="text-2xl sm:text-3xl font-bold text-green-600 mb-4">
-            ¡Compra realizada con éxito!
+        <!-- Ícono de éxito -->
+        <div class="mx-auto mb-6 w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center">
+            <svg class="w-10 h-10" viewBox="0 0 40 40" fill="none">
+                <circle cx="20" cy="20" r="18" stroke="#10b981" stroke-width="2.5" fill="none"/>
+                <path class="check-draw" d="M11 20.5l6.5 6.5 11.5-13"
+                      stroke="#10b981" stroke-width="2.8"
+                      stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+        </div>
+
+        <h1 class="fade-up-1 text-2xl font-bold text-gray-900 mb-2">
+            ¡Compra confirmada!
         </h1>
-
-        <p class="text-gray-600 mb-6 text-sm sm:text-base">
-            Gracias por tu compra.
+        <p class="fade-up-1 text-sm text-gray-400 mb-8">
+            Tus boletos están listos. Revisa tu correo o descárgalos ahora.
         </p>
 
-        <a asp-controller="Pago"
-           asp-action="DescargarBoleto"
-           asp-route-ventaId="@Model.VentaId"
-           target="_blank"
-           class="block w-full sm:inline-block sm:w-auto
-                  bg-[#284D67] hover:bg-[#1f3b50]
-                  text-white px-6 py-3
-                  rounded-xl
-                  transition duration-300
-                  font-medium">
-            Descargar boletos (PDF)
-        </a>
+        @if (Model != null)
+        {
+            <!-- Info del pedido -->
+            <div class="fade-up-2 bg-gray-50 rounded-2xl p-4 text-left mb-6 text-sm space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Orden</span>
+                    <span class="font-semibold text-gray-900">#@Model.VentaId</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Total pagado</span>
+                    <span class="font-semibold text-gray-900">$@Model.Total.ToString("N0") COP</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Fecha</span>
+                    <span class="font-semibold text-gray-900">@Model.Fecha.ToString("ddd dd MMM yyyy · HH:mm")</span>
+                </div>
+            </div>
+        }
 
-        <div class="mt-6">
+        <!-- Acciones -->
+        <div class="fade-up-3 space-y-3">
+            <a asp-controller="Pago"
+               asp-action="DescargarBoleto"
+               asp-route-ventaId="@Model?.VentaId"
+               target="_blank"
+               class="flex items-center justify-center gap-2 w-full bg-gray-900 text-white
+                      py-3.5 rounded-2xl text-sm font-semibold hover:bg-indigo-600
+                      transition-colors duration-200">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Descargar boleto (PDF)
+            </a>
+
             <a href="/Rutas/Index"
-               class="text-blue-600 hover:text-blue-800 underline text-sm sm:text-base">
-                Volver a rutas
+               class="flex items-center justify-center gap-2 w-full border border-gray-200 text-gray-600
+                      py-3.5 rounded-2xl text-sm font-medium hover:bg-gray-50 transition-colors">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Ver más rutas
             </a>
         </div>
 

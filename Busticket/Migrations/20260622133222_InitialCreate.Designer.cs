@@ -12,15 +12,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Busticket.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260326200812_clos")]
-    partial class clos
+    [Migration("20260622133222_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.3")
+                .HasAnnotation("ProductVersion", "9.0.6")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -197,6 +197,174 @@ namespace Busticket.Migrations
                             Lat = 7.1253900000000003,
                             Lng = -73.119799999999998,
                             Nombre = "Bucaramanga"
+                        },
+                        new
+                        {
+                            CiudadId = 7,
+                            Lat = 4.8133299999999997,
+                            Lng = -75.696110000000004,
+                            Nombre = "Pereira"
+                        },
+                        new
+                        {
+                            CiudadId = 8,
+                            Lat = 5.0702800000000003,
+                            Lng = -75.513890000000004,
+                            Nombre = "Manizales"
+                        },
+                        new
+                        {
+                            CiudadId = 9,
+                            Lat = 11.240780000000001,
+                            Lng = -74.199039999999997,
+                            Nombre = "Santa Marta"
+                        },
+                        new
+                        {
+                            CiudadId = 10,
+                            Lat = 4.4388899999999998,
+                            Lng = -75.232219999999998,
+                            Nombre = "Ibagué"
+                        },
+                        new
+                        {
+                            CiudadId = 11,
+                            Lat = 2.92767,
+                            Lng = -75.281940000000006,
+                            Nombre = "Neiva"
+                        },
+                        new
+                        {
+                            CiudadId = 12,
+                            Lat = 7.8891,
+                            Lng = -72.496899999999997,
+                            Nombre = "Cúcuta"
+                        },
+                        new
+                        {
+                            CiudadId = 13,
+                            Lat = 9.3044399999999996,
+                            Lng = -75.397220000000004,
+                            Nombre = "Sincelejo"
+                        },
+                        new
+                        {
+                            CiudadId = 14,
+                            Lat = 10.463329999999999,
+                            Lng = -73.253060000000005,
+                            Nombre = "Valledupar"
+                        },
+                        new
+                        {
+                            CiudadId = 15,
+                            Lat = 2.4441000000000002,
+                            Lng = -76.614500000000007,
+                            Nombre = "Popayán"
+                        },
+                        new
+                        {
+                            CiudadId = 16,
+                            Lat = 1.2136100000000001,
+                            Lng = -77.281109999999998,
+                            Nombre = "Pasto"
+                        },
+                        new
+                        {
+                            CiudadId = 17,
+                            Lat = 5.5338900000000004,
+                            Lng = -73.367779999999996,
+                            Nombre = "Tunja"
+                        },
+                        new
+                        {
+                            CiudadId = 18,
+                            Lat = 8.7477800000000006,
+                            Lng = -75.881110000000007,
+                            Nombre = "Montería"
+                        },
+                        new
+                        {
+                            CiudadId = 19,
+                            Lat = 7.0694400000000002,
+                            Lng = -73.087779999999995,
+                            Nombre = "Floridablanca"
+                        },
+                        new
+                        {
+                            CiudadId = 20,
+                            Lat = 11.54472,
+                            Lng = -72.907219999999995,
+                            Nombre = "Riohacha"
+                        },
+                        new
+                        {
+                            CiudadId = 21,
+                            Lat = 5.3377800000000004,
+                            Lng = -72.391109999999998,
+                            Nombre = "Yopal"
+                        },
+                        new
+                        {
+                            CiudadId = 22,
+                            Lat = 7.0880599999999996,
+                            Lng = -70.762219999999999,
+                            Nombre = "Arauca"
+                        },
+                        new
+                        {
+                            CiudadId = 23,
+                            Lat = 10.83361,
+                            Lng = -74.833609999999993,
+                            Nombre = "Malambo"
+                        },
+                        new
+                        {
+                            CiudadId = 24,
+                            Lat = 6.1744399999999997,
+                            Lng = -75.611940000000004,
+                            Nombre = "Itagüí"
+                        },
+                        new
+                        {
+                            CiudadId = 25,
+                            Lat = 6.17028,
+                            Lng = -75.577500000000001,
+                            Nombre = "Envigado"
+                        },
+                        new
+                        {
+                            CiudadId = 26,
+                            Lat = 10.91639,
+                            Lng = -74.766390000000001,
+                            Nombre = "Soledad"
+                        },
+                        new
+                        {
+                            CiudadId = 27,
+                            Lat = 6.3375000000000004,
+                            Lng = -75.558329999999998,
+                            Nombre = "Bello"
+                        },
+                        new
+                        {
+                            CiudadId = 28,
+                            Lat = 5.5361099999999999,
+                            Lng = -73.367500000000007,
+                            Nombre = "Tunja"
+                        },
+                        new
+                        {
+                            CiudadId = 29,
+                            Lat = 3.8936099999999998,
+                            Lng = -77.067220000000006,
+                            Nombre = "Buenaventura"
+                        },
+                        new
+                        {
+                            CiudadId = 30,
+                            Lat = 4.8944400000000003,
+                            Lng = -75.316109999999995,
+                            Nombre = "Santa Rosa de Cabal"
                         });
                 });
 

@@ -71,7 +71,7 @@ namespace Busticket.Controllers
         public IActionResult CrearRuta()
         {
             CargarViewBags();
-            return View(new Ruta());
+            return View(new Ruta { FechaSalida = DateTime.Now, FechaLlegada = DateTime.Now.AddHours(1) });
         }
 
         [HttpPost]
@@ -89,17 +89,17 @@ namespace Busticket.Controllers
                 return View(ruta);
             }
 
+            ruta.TipoBus ??= "Normal";
+            ruta.NumAsientos ??= 20;
+
             _context.Ruta.Add(ruta);
             _context.SaveChanges();
 
-            var asientos = Enumerable.Range(1, 20)
-                                     .Select(i => new Asiento { Numero = i, RutaId = ruta.RutaId })
-                                     .ToList();
-
+            var asientos = GenerarAsientos(ruta.RutaId, ruta.TipoBus, ruta.NumAsientos.Value);
             _context.Asiento.AddRange(asientos);
             _context.SaveChanges();
 
-            TempData["SuccessMessage"] = "Ruta creada correctamente con sus asientos.";
+            TempData["SuccessMessage"] = $"Ruta creada con {ruta.NumAsientos} asientos ({ruta.TipoBus}).";
             return RedirectToAction("Rutas");
         }
 
@@ -188,6 +188,17 @@ namespace Busticket.Controllers
 
             TempData["SuccessMessage"] = "Ruta eliminada correctamente.";
             return RedirectToAction("Rutas");
+        }
+
+        private static List<Asiento> GenerarAsientos(int rutaId, string tipoBus, int num)
+        {
+            return Enumerable.Range(1, num).Select(i => new Asiento
+            {
+                Numero = i,
+                Codigo = i.ToString(),
+                RutaId = rutaId,
+                Disponible = true
+            }).ToList();
         }
 
         public IActionResult Dashboard()

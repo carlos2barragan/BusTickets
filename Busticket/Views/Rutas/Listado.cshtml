@@ -3,6 +3,16 @@
 @{
     ViewBag.Title = "Rutas disponibles";
     Layout = null;
+
+    var rutasJson = System.Text.Json.JsonSerializer.Serialize(Model.Select(r => new {
+        id         = r.RutaId,
+        origen     = r.CiudadOrigen?.Nombre ?? "",
+        origenLat  = r.CiudadOrigen?.Lat ?? 0,
+        origenLng  = r.CiudadOrigen?.Lng ?? 0,
+        destino    = r.CiudadDestino?.Nombre ?? "",
+        destinoLat = r.CiudadDestino?.Lat ?? 0,
+        destinoLng = r.CiudadDestino?.Lng ?? 0
+    }));
 }
 
 <!DOCTYPE html>
@@ -10,233 +20,497 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Busticket | Rutas disponibles</title>
 
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        @@keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
+        body { font-family: 'Inter', sans-serif; }
 
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .profile-dropdown { display: none; }
+        .profile-dropdown.open { display: block; }
+
+        .header-scrolled {
+            background: rgba(255,255,255,0.97) !important;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.07);
         }
 
-        .fade-up {
-            animation: fadeUp .6s ease-out forwards;
+        /* Scrollbar minimalista en la lista */
+        .route-list::-webkit-scrollbar { width: 4px; }
+        .route-list::-webkit-scrollbar-track { background: transparent; }
+        .route-list::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 4px; }
+
+        .route-card { transition: all .2s ease; }
+        .route-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+        .route-card.active { border-color: #6366f1 !important; box-shadow: 0 0 0 2px #6366f133; }
+
+        /* Leaflet popup limpio */
+        .leaflet-popup-content-wrapper {
+            border-radius: 12px !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,.15) !important;
+            border: none !important;
+            padding: 0 !important;
         }
+        .leaflet-popup-content { margin: 0 !important; }
+        .leaflet-popup-tip { display: none; }
+        .custom-popup { padding: 10px 14px; font-family: 'Inter', sans-serif; }
+        .custom-popup .city { font-weight: 600; font-size: 13px; color: #111827; }
+        .custom-popup .label { font-size: 11px; color: #6366f1; margin-top: 2px; }
     </style>
 </head>
 
+<!-- ═══ HEADER ═══════════════════════════════════════════════════ -->
+<header id="header"
+        class="fixed top-0 inset-x-0 z-50 transition-all duration-300
+               bg-white/85 backdrop-blur-md border-b border-gray-100">
+    <div class="max-w-7xl mx-auto px-10 py-5 flex items-center justify-between">
+
+        <div class="flex items-center gap-5">
+            <button onclick="history.back()"
+                    class="flex items-center gap-1.5 text-xs tracking-widest uppercase text-gray-500
+                           hover:text-gray-900 transition-colors group">
+                <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform duration-200"
+                     fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Volver
+            </button>
+            <div class="w-px h-4 bg-gray-200"></div>
+            <a href="/Home/Index" class="text-xl tracking-widest uppercase font-semibold text-gray-900">
+                Busticket
+            </a>
+        </div>
+
+        <nav class="hidden md:flex gap-8 text-xs tracking-widest uppercase items-center text-gray-700">
+            <a href="/Ayuda"
+               class="relative after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-px
+                      after:bg-gray-900 after:transition-all after:duration-300 hover:after:w-full hover:text-gray-900 transition-colors">
+                Ayuda
+            </a>
+
+            @if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                <div class="relative" id="profileWrapper">
+                    <button onclick="toggleDropdown()"
+                            class="flex items-center justify-center w-9 h-9 rounded-full border border-gray-300
+                                   hover:bg-gray-900 hover:text-white hover:border-gray-900 transition-all duration-200">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                    </button>
+                    <div id="profileDropdown"
+                         class="profile-dropdown absolute right-0 mt-3 w-48 bg-white border border-gray-100
+                                rounded-2xl overflow-hidden shadow-xl shadow-gray-200/60">
+                        <a href="/Perfil"
+                           class="flex items-center gap-3 px-5 py-3.5 text-sm text-gray-700 hover:bg-gray-50
+                                  transition-colors normal-case tracking-normal font-normal">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                            Mi perfil
+                        </a>
+                        <div class="h-px bg-gray-100"></div>
+                        <form asp-controller="Auth" asp-action="Logout" method="post">
+                            <button type="submit"
+                                    class="w-full flex items-center gap-3 px-5 py-3.5 text-sm text-red-500
+                                           hover:bg-red-50 transition-colors normal-case tracking-normal font-normal">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                </svg>
+                                Cerrar sesión
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <a href="/Auth/Login"
+                   class="relative after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-px
+                          after:bg-gray-900 after:transition-all after:duration-300 hover:after:w-full hover:text-gray-900 transition-colors">
+                    Iniciar sesión
+                </a>
+            }
+
+            @if (User.IsInRole("Admin"))
+            {
+                <a href="/Admin/Index"
+                   class="relative after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-px
+                          after:bg-gray-900 after:transition-all after:duration-300 hover:after:w-full hover:text-gray-900 transition-colors">
+                    Admin
+                </a>
+            }
+            @if (User.IsInRole("Empresa"))
+            {
+                <a href="/PanelEmpresa/Index"
+                   class="relative after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-px
+                          after:bg-gray-900 after:transition-all after:duration-300 hover:after:w-full hover:text-gray-900 transition-colors">
+                    Empresa
+                </a>
+            }
+        </nav>
+
+        <button id="menuBtn" class="md:hidden text-xl text-gray-700 z-50">☰</button>
+    </div>
+</header>
+
+<!-- MENÚ MÓVIL -->
+<div id="mobileMenu"
+     class="fixed inset-0 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center
+            space-y-8 uppercase tracking-widest text-lg transform -translate-y-full
+            transition-transform duration-500 md:hidden z-40 text-white">
+    <a href="/Ayuda">Ayuda</a>
+    @if (User.Identity != null && User.Identity.IsAuthenticated)
+    {
+        <a href="/Perfil">Mi perfil</a>
+        <form asp-controller="Auth" asp-action="Logout" method="post">
+            <button type="submit">Cerrar sesión</button>
+        </form>
+    }
+    else { <a href="/Auth/Login">Iniciar sesión</a> }
+    @if (User.IsInRole("Admin")) { <a href="/Admin/Index">Admin</a> }
+    @if (User.IsInRole("Empresa")) { <a href="/PanelEmpresa/Index">Empresa</a> }
+</div>
+
+<!-- ═══ BODY ══════════════════════════════════════════════════════ -->
 <body class="bg-[#f7f8fa] text-gray-800">
 
-    <!-- ================= HEADER ================= -->
-    <header class="absolute top-0 inset-x-0 z-50">
-        <div class="max-w-7xl mx-auto px-10 py-6 flex items-center justify-between text-black">
+    <!-- ── DESKTOP: panel izquierdo + mapa derecho ─────────────── -->
+    <div class="hidden lg:flex h-screen pt-[72px]">
 
-            <div class="flex items-center gap-6">
-                @if (Context.Request.Path != "/Home/Index")
-                {
-                    <button onclick="history.back()"
-                            class="flex items-center gap-2 text-sm uppercase opacity-80 hover:opacity-100">
-                        ← Volver
+        <!-- Panel izquierdo -->
+        <div class="w-[400px] flex-shrink-0 flex flex-col bg-[#f7f8fa] border-r border-gray-100">
+
+            <!-- Filtros -->
+            <div class="px-6 py-5 border-b border-gray-100 bg-white">
+                <p class="text-[10px] uppercase tracking-widest text-gray-400 font-medium mb-3">Filtrar rutas</p>
+                <form method="get" action="/Rutas/Listado" class="flex gap-2">
+                    <select name="origen"
+                            class="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700
+                                   bg-gray-50 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
+                        <option value="">Origen</option>
+                        @foreach (var c in Model.Select(r => r.CiudadOrigen).Where(c => c != null).DistinctBy(c => c!.CiudadId))
+                        {
+                            <option>@c!.Nombre</option>
+                        }
+                    </select>
+                    <select name="destino"
+                            class="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700
+                                   bg-gray-50 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
+                        <option value="">Destino</option>
+                        @foreach (var c in Model.Select(r => r.CiudadDestino).Where(c => c != null).DistinctBy(c => c!.CiudadId))
+                        {
+                            <option>@c!.Nombre</option>
+                        }
+                    </select>
+                    <button type="submit"
+                            class="px-4 py-2 bg-gray-900 text-white text-sm rounded-xl hover:bg-gray-700 transition-colors font-medium">
+                        OK
                     </button>
-                }
-
-                <a href="/Home/Index" class="text-2xl uppercase font-semibold">
-                    Busticket
-                </a>
+                </form>
             </div>
 
-            <div class="flex gap-6 text-sm uppercase items-center">
-                <a href="/Ayuda">Ayuda</a>
+            <!-- Lista de rutas -->
+            <div class="route-list flex-1 overflow-y-auto px-4 py-4 space-y-3">
 
-                @if (User.Identity != null && User.Identity.IsAuthenticated)
+                @if (!Model.Any())
                 {
-                    <a href="/Perfil">👤</a>
-
-                    <form asp-controller="Auth" asp-action="Logout" method="post">
-                        <button type="submit">Salir</button>
-                    </form>
+                    <div class="flex flex-col items-center justify-center h-40 text-gray-400">
+                        <p class="font-medium">Sin resultados</p>
+                        <p class="text-sm mt-1">Prueba otros filtros</p>
+                    </div>
                 }
-                else
+
+                @foreach (var ruta in Model)
                 {
-                    <a href="/Auth/Login">Login</a>
+                    <article id="card-@ruta.RutaId"
+                             class="route-card bg-white rounded-2xl p-4 border border-gray-100 shadow-sm cursor-pointer"
+                             onmouseenter="highlightRoute(@ruta.RutaId)"
+                             onmouseleave="unhighlightRoute(@ruta.RutaId)"
+                             onclick="focusRoute(@ruta.RutaId); location.href='/Rutas/Info/@ruta.RutaId'">
+
+                        <div class="flex gap-3 items-center">
+                            <img src="@(string.IsNullOrEmpty(ruta.ImagenUrl)
+                                          ? $"https://picsum.photos/seed/{ruta.RutaId}/120/90"
+                                          : ruta.ImagenUrl)"
+                                 class="w-24 h-16 rounded-xl object-cover flex-shrink-0" />
+
+                            <div class="flex-grow min-w-0">
+                                <p class="font-semibold text-gray-900 text-sm">
+                                    @ruta.CiudadOrigen?.Nombre
+                                    <span class="text-indigo-400">→</span>
+                                    @ruta.CiudadDestino?.Nombre
+                                </p>
+                                <p class="text-xs text-gray-400 mt-0.5 truncate">
+                                    @ruta.Empresa?.Nombre
+                                    @if (ruta.DuracionMin > 0)
+                                    {
+                                        <span class="text-gray-300 mx-1">·</span>
+                                        <span>@(ruta.DuracionMin / 60)h @(ruta.DuracionMin % 60)m</span>
+                                    }
+                                </p>
+                                <p class="text-xs text-gray-300 mt-0.5">
+                                    @ruta.FechaSalida.ToString("ddd dd MMM · HH:mm")
+                                </p>
+                            </div>
+
+                            <div class="text-right flex-shrink-0 pl-2">
+                                <p class="font-bold text-gray-900 text-sm">$@ruta.Precio.ToString("N0")</p>
+                                <p class="text-[10px] text-gray-400 mb-1">COP</p>
+                                <span class="text-[11px] bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-full font-semibold">
+                                    Ver →
+                                </span>
+                            </div>
+                        </div>
+                    </article>
                 }
             </div>
         </div>
-    </header>
 
-    <!-- ================= MAIN ================= -->
-    <main class="max-w-7xl mx-auto px-4 pt-20 pb-12">
+        <!-- Mapa -->
+        <div class="flex-1 relative">
+            <div id="map" class="absolute inset-0"></div>
 
-        <!-- BOTÓN MOBILE -->
-        <button onclick="toggleFilters()"
-                class="lg:hidden fixed top-5 left-5 z-50 bg-black text-white p-3 rounded-full">
-            ☰
-        </button>
+            <!-- Leyenda -->
+            <div class="absolute bottom-6 left-6 z-[999] bg-white/90 backdrop-blur-sm
+                        rounded-2xl px-4 py-3 shadow-lg border border-gray-100 text-xs text-gray-600 space-y-1.5">
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-indigo-500 flex-shrink-0"></span>
+                    <span>Ciudad origen</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-violet-500 flex-shrink-0"></span>
+                    <span>Ciudad destino</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-5 border-t-2 border-indigo-400 border-dashed flex-shrink-0"></span>
+                    <span>Ruta en carretera</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        <!-- ================= MOBILE ================= -->
-        <div class="lg:hidden flex flex-col gap-6">
+    <!-- ── MOBILE ───────────────────────────────────────────────── -->
+    <div class="lg:hidden pt-[72px]">
+        <div class="h-56">
+            <div id="map-mobile" class="w-full h-full"></div>
+        </div>
+        <div class="px-4 pt-4 pb-6 space-y-3">
+            <form method="get" action="/Rutas/Listado"
+                  class="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm flex gap-2">
+                <select name="origen" class="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50">
+                    <option value="">Origen</option>
+                    @foreach (var c in Model.Select(r => r.CiudadOrigen).Where(c => c != null).DistinctBy(c => c!.CiudadId))
+                    { <option>@c!.Nombre</option> }
+                </select>
+                <select name="destino" class="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50">
+                    <option value="">Destino</option>
+                    @foreach (var c in Model.Select(r => r.CiudadDestino).Where(c => c != null).DistinctBy(c => c!.CiudadId))
+                    { <option>@c!.Nombre</option> }
+                </select>
+                <button type="submit" class="px-4 py-2 bg-gray-900 text-white rounded-xl text-sm">OK</button>
+            </form>
 
-            <!-- FILTROS -->
-            <aside id="filtersPanel"
-                   class="fixed top-0 left-0 h-full w-72 bg-white z-40
-               transform -translate-x-full transition duration-300 p-4">
-
-                <h2 class="mb-4 font-bold">Filtros</h2>
-
-                <form method="get" action="/Rutas/Listado" class="space-y-3">
-
-                    <select name="origen" class="w-full border p-2 rounded">
-                        <option value="">Origen</option>
-                        @foreach (var c in Model.Select(r => r.CiudadOrigen).Distinct())
-                        {
-                            <option>@c.Nombre</option>
-                        }
-                    </select>
-
-                    <select name="destino" class="w-full border p-2 rounded">
-                        <option value="">Destino</option>
-                        @foreach (var c in Model.Select(r => r.CiudadDestino).Distinct())
-                        {
-                            <option>@c.Nombre</option>
-                        }
-                    </select>
-
-                    <button class="w-full bg-black text-white p-2 rounded">
-                        Filtrar
-                    </button>
-                </form>
-            </aside>
-
-            <!-- RUTAS MOBILE -->
             @foreach (var ruta in Model)
             {
-                <div class="bg-white p-4 rounded-xl shadow"
+                <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm cursor-pointer active:scale-[0.98] transition-transform"
                      onclick="location.href='/Rutas/Info/@ruta.RutaId'">
-
-                    <img src="@(string.IsNullOrEmpty(ruta.ImagenUrl)
-                                             ? $"https://picsum.photos/seed/{ruta.RutaId}/300/200"
-                                             : ruta.ImagenUrl)"
-                         class="w-full h-40 object-cover rounded mb-2" />
-
-                    <p class="font-bold">
-                        @ruta.CiudadOrigen?.Nombre → @ruta.CiudadDestino?.Nombre
-                    </p>
-
-                    <p class="text-sm text-gray-500">
-                        @ruta.Empresa?.Nombre
-                    </p>
-
-                    <p class="font-bold mt-2">
-                        $@ruta.Precio.ToString("N0") COP
-                    </p>
+                    <div class="flex gap-3 items-center">
+                        <img src="@(string.IsNullOrEmpty(ruta.ImagenUrl) ? $"https://picsum.photos/seed/{ruta.RutaId}/100/80" : ruta.ImagenUrl)"
+                             class="w-20 h-14 rounded-xl object-cover flex-shrink-0" />
+                        <div class="flex-grow min-w-0">
+                            <p class="font-semibold text-sm truncate">@ruta.CiudadOrigen?.Nombre → @ruta.CiudadDestino?.Nombre</p>
+                            <p class="text-xs text-gray-400 mt-0.5">@ruta.Empresa?.Nombre</p>
+                        </div>
+                        <p class="font-bold text-sm flex-shrink-0">$@ruta.Precio.ToString("N0")</p>
+                    </div>
                 </div>
             }
         </div>
-
-        <!-- ================= DESKTOP ================= -->
-        <div class="hidden lg:grid grid-cols-[280px_1fr_360px] gap-8">
-
-            <!-- FILTROS -->
-            <aside class="fade-up">
-                <div class="bg-white rounded-2xl p-6 shadow-sm">
-
-                    <h2 class="text-xs uppercase text-gray-500 mb-6">Filtros</h2>
-
-                    <form method="get" action="/Rutas/Listado" class="space-y-5">
-
-                        <select name="origen" class="w-full rounded-lg border-gray-200 text-sm">
-                            <option value="">Desde</option>
-                            @foreach (var c in Model.Select(r => r.CiudadOrigen).Distinct())
-                            {
-                                <option>@c.Nombre</option>
-                            }
-                        </select>
-
-                        <select name="destino" class="w-full rounded-lg border-gray-200 text-sm">
-                            <option value="">Hasta</option>
-                            @foreach (var c in Model.Select(r => r.CiudadDestino).Distinct())
-                            {
-                                <option>@c.Nombre</option>
-                            }
-                        </select>
-
-                        <button class="w-full py-2 rounded-full bg-black text-white">
-                            Aplicar
-                        </button>
-                    </form>
-                </div>
-            </aside>
-
-            <!-- RUTAS (TU DISEÑO ORIGINAL) -->
-            <section class="fade-up">
-
-                <div class="flex flex-col gap-6 max-h-[70vh] overflow-y-auto">
-
-                    @foreach (var ruta in Model)
-                    {
-                        <article class="group bg-white rounded-2xl p-5 shadow-sm
-                            hover:shadow-2xl hover:-translate-y-2 transition cursor-pointer border"
-                                 onclick="location.href='/Rutas/Info/@ruta.RutaId'">
-
-                            <div class="flex gap-4 items-center">
-
-                                <img src="@(string.IsNullOrEmpty(ruta.ImagenUrl)
-                                                                     ? $"https://picsum.photos/seed/{ruta.RutaId}/300/200"
-                                                                     : ruta.ImagenUrl)"
-                                     class="w-28 h-20 rounded-xl object-cover" />
-
-                                <div class="flex-grow">
-                                    <p class="font-semibold">
-                                        @ruta.CiudadOrigen?.Nombre — @ruta.CiudadDestino?.Nombre
-                                    </p>
-
-                                    <p class="text-sm text-gray-500">
-                                        @ruta.Empresa?.Nombre · @ruta.DuracionMin min
-                                    </p>
-                                </div>
-
-                                <div class="text-right">
-                                    <p class="font-bold">$@ruta.Precio.ToString("N0")</p>
-                                    <p class="text-xs text-gray-400">COP</p>
-                                </div>
-
-                            </div>
-                        </article>
-                    }
-                </div>
-            </section>
-
-            <!-- MAPA -->
-            <aside>
-                <div id="map" class="w-full h-[360px] rounded-2xl"></div>
-            </aside>
-
-        </div>
-
-    </main>
-
-    <!-- ================= JS ================= -->
-    <script>
-        function toggleFilters() {
-            document.getElementById("filtersPanel")
-                .classList.toggle("-translate-x-full");
-        }
-
-        var map = L.map('map').setView([4.6, -74.1], 6);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
-            .addTo(map);
-    </script>
+    </div>
 
 </body>
+
+<!-- ═══ SCRIPTS ═══════════════════════════════════════════════════ -->
+<script>
+const rutas = @Html.Raw(rutasJson);
+
+// ── Iconos personalizados ─────────────────────────────────────────
+function pinIcon(color, label) {
+    return L.divIcon({
+        className: '',
+        html: `<div style="
+            display:flex;flex-direction:column;align-items:center;gap:2px;
+            font-family:'Inter',sans-serif">
+          <div style="
+            background:${color};color:#fff;font-size:10px;font-weight:600;
+            padding:2px 7px;border-radius:999px;white-space:nowrap;
+            box-shadow:0 2px 8px ${color}66">${label}</div>
+          <div style="width:8px;height:8px;background:${color};
+            border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px ${color}88;
+            margin-top:1px"></div>
+        </div>`,
+        iconSize: [80, 34],
+        iconAnchor: [40, 34]
+    });
+}
+
+// ── Inicializar mapa ──────────────────────────────────────────────
+function buildMap(containerId) {
+    const m = L.map(containerId, {
+        zoomControl: false,
+        scrollWheelZoom: true
+    });
+
+    // Tiles CartoDB Positron (más limpio que OSM)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© OpenStreetMap © CartoDB',
+        subdomains: 'abcd',
+        maxZoom: 18
+    }).addTo(m);
+
+    L.control.zoom({ position: 'topright' }).addTo(m);
+
+    return m;
+}
+
+// ── Cargar ruta OSRM (por carretera) ────────────────────────────
+async function fetchRoadRoute(lat1, lng1, lat2, lng2) {
+    try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=full&geometries=geojson`;
+        const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+        const data = await res.json();
+        if (data.code === 'Ok' && data.routes?.[0]) {
+            return data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+        }
+    } catch (_) {}
+    return null;
+}
+
+// ── Dibujar rutas en el mapa ─────────────────────────────────────
+const routeLayers  = {};   // id -> { line, origin, dest }
+const cityMarkers  = {};   // key -> marker
+
+async function populateMap(m) {
+    const valid = rutas.filter(r => r.origenLat && r.origenLng && r.destinoLat && r.destinoLng);
+
+    if (!valid.length) { m.setView([4.6, -74.1], 6); return; }
+
+    const allPoints = [];
+
+    for (const r of valid) {
+        // Marcadores (una sola vez por ciudad)
+        const oKey = `${r.origenLat},${r.origenLng}`;
+        const dKey = `${r.destinoLat},${r.destinoLng}`;
+
+        if (!cityMarkers[oKey]) {
+            cityMarkers[oKey] = L.marker([r.origenLat, r.origenLng], { icon: pinIcon('#4f46e5', r.origen) })
+                .addTo(m)
+                .bindPopup(`<div class="custom-popup"><div class="city">${r.origen}</div><div class="label">Origen</div></div>`);
+        }
+        if (!cityMarkers[dKey]) {
+            cityMarkers[dKey] = L.marker([r.destinoLat, r.destinoLng], { icon: pinIcon('#7c3aed', r.destino) })
+                .addTo(m)
+                .bindPopup(`<div class="custom-popup"><div class="city">${r.destino}</div><div class="label">Destino</div></div>`);
+        }
+
+        allPoints.push([r.origenLat, r.origenLng], [r.destinoLat, r.destinoLng]);
+
+        // Obtener ruta por carretera
+        const coords = await fetchRoadRoute(r.origenLat, r.origenLng, r.destinoLat, r.destinoLng);
+        const lineCoords = coords ?? [[r.origenLat, r.origenLng], [r.destinoLat, r.destinoLng]];
+
+        // Línea "sombra" + línea principal
+        const shadow = L.polyline(lineCoords, { color: '#818cf8', weight: 7, opacity: 0.15 }).addTo(m);
+        const line   = L.polyline(lineCoords, { color: '#6366f1', weight: 3.5, opacity: 0.85 }).addTo(m);
+
+        routeLayers[r.id] = { line, shadow, r };
+    }
+
+    m.fitBounds(allPoints, { padding: [60, 60], animate: true });
+}
+
+// ── Desktop ───────────────────────────────────────────────────────
+let desktopMap = null;
+if (document.getElementById('map')) {
+    desktopMap = buildMap('map');
+    populateMap(desktopMap);
+}
+
+// ── Mobile ────────────────────────────────────────────────────────
+if (document.getElementById('map-mobile')) {
+    const mobileMap = buildMap('map-mobile');
+    populateMap(mobileMap);
+}
+
+// ── Interacción lista → mapa ──────────────────────────────────────
+function highlightRoute(id) {
+    const layer = routeLayers[id];
+    if (!layer || !desktopMap) return;
+    layer.line.setStyle({ color: '#4f46e5', weight: 5, opacity: 1 });
+    layer.shadow.setStyle({ opacity: 0.25 });
+}
+
+function unhighlightRoute(id) {
+    const card = document.getElementById('card-' + id);
+    if (card?.classList.contains('active')) return;
+    const layer = routeLayers[id];
+    if (!layer) return;
+    layer.line.setStyle({ color: '#6366f1', weight: 3.5, opacity: 0.85 });
+    layer.shadow.setStyle({ opacity: 0.15 });
+}
+
+function focusRoute(id) {
+    // Limpiar selección anterior
+    document.querySelectorAll('.route-card').forEach(c => c.classList.remove('active'));
+    Object.values(routeLayers).forEach(({ line, shadow }) => {
+        line.setStyle({ color: '#6366f1', weight: 3.5, opacity: 0.85 });
+        shadow.setStyle({ opacity: 0.15 });
+    });
+
+    // Activar
+    document.getElementById('card-' + id)?.classList.add('active');
+    const layer = routeLayers[id];
+    if (layer && desktopMap) {
+        layer.line.setStyle({ color: '#4f46e5', weight: 5, opacity: 1 });
+        layer.shadow.setStyle({ opacity: 0.28 });
+        const { r } = layer;
+        desktopMap.fitBounds(
+            [[r.origenLat, r.origenLng], [r.destinoLat, r.destinoLng]],
+            { padding: [80, 80], animate: true, duration: 0.7 }
+        );
+    }
+}
+
+// ── Header scroll ─────────────────────────────────────────────────
+window.addEventListener('scroll', () => {
+    document.getElementById('header')
+        .classList.toggle('header-scrolled', window.scrollY > 10);
+});
+
+// ── Dropdown perfil ───────────────────────────────────────────────
+function toggleDropdown() {
+    document.getElementById('profileDropdown')?.classList.toggle('open');
+}
+document.addEventListener('click', e => {
+    const w = document.getElementById('profileWrapper');
+    if (w && !w.contains(e.target))
+        document.getElementById('profileDropdown')?.classList.remove('open');
+});
+
+// ── Menú móvil ────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    const btn  = document.getElementById('menuBtn');
+    const menu = document.getElementById('mobileMenu');
+    let open   = false;
+    btn?.addEventListener('click', () => {
+        open = !open;
+        menu.classList.toggle('-translate-y-full', !open);
+        btn.textContent = open ? '✕' : '☰';
+    });
+});
+</script>
 </html>

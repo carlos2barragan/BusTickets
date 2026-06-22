@@ -51,6 +51,9 @@ namespace Busticket.Models
 
         public string? ImagenUrl { get; set; }
 
+        public string? TipoBus { get; set; }   // "Normal" | "VIP" | "DosPisos"
+        public int? NumAsientos { get; set; }
+
         // Lista de asientos
         public List<Asiento> Asientos { get; set; } = new List<Asiento>();
     }

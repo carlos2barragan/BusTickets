@@ -1,148 +1,319 @@
-﻿@model Busticket.Models.PagoViewModel
+@model Busticket.Models.PagoViewModel
 
 @{
-    ViewBag.Title = "Busticket - Pago";
+    ViewBag.Title = "Pago";
     Layout = null;
 }
 
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Busticket | Pago</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <title>BusTicket - Pago</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
-<body class="font-sans bg-white flex justify-center py-12">
+<body class="bg-[#f7f8fa] text-gray-800">
 
-    <div class="w-full max-w-5xl p-6 flex flex-col lg:flex-row gap-12 scale-90">
+<partial name="_SharedHeader" />
 
-      
-        <div class="flex-1 bg-white p-6 rounded-xl shadow-lg">
-            <h1 class="text-4xl md:text-5xl text-[#284D67] font-bold">BusTicket</h1>
+<main class="max-w-screen-lg mx-auto px-4 sm:px-6 lg:px-10 pt-28 pb-16">
 
-            <div class="mt-10">
-                <h1 class="text-2xl md:text-4xl font-semibold">Realiza tu pago</h1>
-                <h4 class="text-base md:text-xl text-gray-600 mt-6">
-                    Introduce los datos de tu tarjeta para realizar el pago. <br>
-                    Serás redirigido a la página de autorización de tu banco.
-                </h4>
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 items-start">
+
+        <!-- ── FORMULARIO ─────────────────────────────────────────── -->
+        <div class="space-y-6">
+
+            <!-- Vista previa de la tarjeta -->
+            <div class="relative h-48 rounded-3xl overflow-hidden select-none"
+                 style="background: linear-gradient(135deg,#1e1b4b 0%,#4338ca 50%,#6d28d9 100%)">
+                <!-- Chip -->
+                <div class="absolute top-6 left-7 w-10 h-7 rounded-md bg-amber-300/80"
+                     style="background:linear-gradient(135deg,#fbbf24,#f59e0b)"></div>
+                <!-- Network logo -->
+                <div class="absolute top-5 right-7 flex">
+                    <div class="w-9 h-9 rounded-full bg-red-500/80"></div>
+                    <div class="w-9 h-9 rounded-full bg-orange-400/80 -ml-4"></div>
+                </div>
+                <!-- Number -->
+                <p id="cardPreviewNum"
+                   class="absolute bottom-14 left-7 text-white font-mono text-lg tracking-[.25em] font-medium">
+                    •••• •••• •••• ••••
+                </p>
+                <!-- Name & expiry -->
+                <div class="absolute bottom-5 left-7 right-7 flex justify-between items-end">
+                    <div>
+                        <p class="text-white/50 text-[10px] uppercase tracking-widest">Titular</p>
+                        <p id="cardPreviewName" class="text-white text-sm font-medium uppercase tracking-wider mt-0.5">
+                            Tu nombre
+                        </p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-white/50 text-[10px] uppercase tracking-widest">Válida hasta</p>
+                        <p id="cardPreviewExp" class="text-white text-sm font-medium mt-0.5">07 / 26</p>
+                    </div>
+                </div>
+                <!-- Glare -->
+                <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none"></div>
             </div>
 
-            <form asp-action="FinalizarPago" method="post" class="mt-10 space-y-6">
-                @Html.AntiForgeryToken()
+            <!-- Form -->
+            <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+                <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-400 mb-6">Datos de pago</h2>
 
-                <input type="hidden" name="RutaId" value="@Model.RutaId" />
-
-                <div>
-                    <label for="nombre" class="text-lg text-gray-700">Nombre</label><br>
-                    <input type="text" id="nombre" name="Nombre" required placeholder="Nombre en la tarjeta"
-                           class="w-full h-14 px-4 text-lg md:text-2xl rounded-lg bg-gray-200 focus:outline-none">
-                </div>
-
-                <div>
-                    <label for="tarjeta" class="text-lg text-gray-700">Número de tarjeta</label><br>
-                    <div class="relative w-full">
-                        <img src="./Imagenes/Mastercard-Logo.wine.png" class="absolute left-4 top-1/2 -translate-y-1/2 w-10 md:w-12">
-                        <input type="text" id="tarjeta" name="NumeroTarjeta" maxlength="19" inputmode="numeric" required placeholder="xxxx-xxxx-xxxx-xxxx"
-                               class="w-full h-14 md:h-16 pl-16 md:pl-20 text-lg md:text-2xl rounded-lg bg-gray-200 focus:outline-none">
-                    </div>
-                </div>
-
-                <div class="flex gap-6 md:gap-12">
-                    <div class="flex-1">
-                        <label for="validez" class="text-lg text-gray-700">Válido hasta</label><br>
-                        <input type="text" id="validez" name="Validez" value="07 / 26" readonly
-                               class="w-full h-14 md:h-16 px-4 text-lg md:text-2xl rounded-lg bg-gray-200 focus:outline-none">
-                    </div>
-
-                    <div class="flex-1">
-                        <label for="cvc" class="text-lg text-gray-700">CVC</label><br>
-                        <input type="text" id="cvc" name="CVC" maxlength="3" required placeholder="XXX"
-                               class="w-full h-14 md:h-16 px-4 text-lg md:text-2xl rounded-lg bg-gray-200 focus:outline-none">
-                    </div>
-                </div>
-
-                <div>
-                    <label for="descuento" class="text-lg text-gray-700">Código de descuento</label><br>
-                    <div class="relative w-full">
-                        <input type="text" id="descuento" name="Descuento" placeholder="xxxxxxx-20-OFF"
-                               class="w-full h-14 md:h-16 px-4 text-lg md:text-2xl rounded-lg bg-gray-200 focus:outline-none">
-                        <a href="#" class="absolute right-4 md:right-5 top-1/2 -translate-y-1/2 font-bold text-[#284D67] text-lg md:text-xl">Aplicar</a>
-                    </div>
-                </div>
-
-                <input type="hidden" name="Total" value="@Model.Total" />
-
-                @if (Model.Asientos != null && Model.Asientos.Count > 0)
-                {
+                <form asp-action="FinalizarPago" method="post" class="space-y-5" id="pagoForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="RutaId" value="@Model.RutaId" />
+                    <input type="hidden" name="Total"  value="@Model.Total" />
                     @foreach (var asiento in Model.Asientos)
                     {
                         <input type="hidden" name="Asientos" value="@asiento" />
                     }
-                }
 
-                <div class="mt-8">
-                    <button type="button"
-                            onclick="confirmarPago()"
-                            class="w-36 h-12 rounded-full bg-[#284D67] text-white text-lg md:text-xl hover:opacity-50 transition">
-                        Pagar
+                    <!-- Nombre -->
+                    <div>
+                        <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">
+                            Nombre en la tarjeta
+                        </label>
+                        <input type="text" name="Nombre" id="inputNombre" required
+                               placeholder="Ej. Carlos Barragan"
+                               oninput="document.getElementById('cardPreviewName').textContent = this.value || 'Tu nombre'"
+                               class="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-800
+                                      bg-gray-50 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition">
+                    </div>
+
+                    <!-- Número de tarjeta -->
+                    <div>
+                        <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">
+                            Número de tarjeta
+                        </label>
+                        <div class="relative">
+                            <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 pointer-events-none"
+                                 fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                            </svg>
+                            <input type="text" name="NumeroTarjeta" id="inputTarjeta" maxlength="19" inputmode="numeric"
+                                   required placeholder="1234 5678 9012 3456"
+                                   class="w-full border border-gray-200 rounded-2xl pl-12 pr-4 py-3 text-sm font-mono
+                                          text-gray-800 bg-gray-50 focus:outline-none focus:border-indigo-400
+                                          focus:ring-2 focus:ring-indigo-100 transition tracking-widest">
+                        </div>
+                    </div>
+
+                    <!-- Expiry + CVC -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">
+                                Válida hasta
+                            </label>
+                            <input type="text" name="Validez" id="inputValidez" maxlength="7"
+                                   placeholder="MM / AA" inputmode="numeric" required
+                                   class="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm font-mono
+                                          text-gray-800 bg-gray-50 focus:outline-none focus:border-indigo-400
+                                          focus:ring-2 focus:ring-indigo-100 transition tracking-widest">
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">
+                                CVC
+                            </label>
+                            <input type="password" name="CVC" id="inputCVC" maxlength="3" required placeholder="•••"
+                                   inputmode="numeric"
+                                   class="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm font-mono
+                                          text-gray-800 bg-gray-50 focus:outline-none focus:border-indigo-400
+                                          focus:ring-2 focus:ring-indigo-100 transition tracking-widest">
+                        </div>
+                    </div>
+
+                    <!-- Código de descuento -->
+                    <div>
+                        <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">
+                            Código de descuento
+                            <span class="normal-case text-gray-400 font-normal ml-1">(opcional)</span>
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="text" name="Descuento" placeholder="PROMO20"
+                                   class="flex-1 border border-gray-200 rounded-2xl px-4 py-3 text-sm
+                                          text-gray-800 bg-gray-50 focus:outline-none focus:border-indigo-400
+                                          focus:ring-2 focus:ring-indigo-100 transition uppercase">
+                            <button type="button"
+                                    class="px-5 py-3 rounded-2xl border border-gray-200 text-sm font-medium
+                                           text-gray-600 hover:bg-gray-50 transition-colors">
+                                Aplicar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Botón pagar -->
+                    <button type="button" onclick="confirmarPago()"
+                            class="w-full bg-gray-900 text-white py-4 rounded-2xl text-sm font-semibold
+                                   hover:bg-indigo-600 active:scale-[.98] transition-all duration-200 mt-2">
+                        Confirmar y pagar · $@Model.Total.ToString("N0") COP
                     </button>
 
+                    <!-- Badges de seguridad -->
+                    <div class="flex items-center justify-center gap-5 pt-2 text-xs text-gray-400">
+                        <span class="flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                            Pago seguro SSL
+                        </span>
+                        <span class="flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                            </svg>
+                            Datos encriptados
+                        </span>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ── RESUMEN DE COMPRA ───────────────────────────────────── -->
+        <div class="lg:sticky lg:top-28 space-y-4">
+
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-5">Resumen de compra</h3>
+
+                <!-- Ruta -->
+                <div class="flex items-center gap-2 font-semibold text-gray-900 mb-4">
+                    <span class="text-sm">@Model.Origen</span>
+                    <svg class="w-4 h-4 text-indigo-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                    </svg>
+                    <span class="text-sm">@Model.Destino</span>
                 </div>
-            </form>
+
+                <!-- Detalles -->
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400 flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            Fecha
+                        </span>
+                        <span class="text-gray-700 font-medium">@Model.Fecha</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400 flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Salida
+                        </span>
+                        <span class="text-gray-700 font-medium">@Model.Hora</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Empresa</span>
+                        <span class="text-gray-700 font-medium">@Model.Empresa</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Duración</span>
+                        <span class="text-gray-700 font-medium">@Model.Duracion</span>
+                    </div>
+                    @if (Model.Asientos != null && Model.Asientos.Any())
+                    {
+                        <div class="flex justify-between items-start">
+                            <span class="text-gray-400">Asientos</span>
+                            <span class="text-gray-700 font-medium text-right">
+                                @string.Join(", ", Model.Asientos)
+                            </span>
+                        </div>
+                    }
+                </div>
+
+                <div class="h-px bg-gray-100 my-5"></div>
+
+                <!-- Totales -->
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between text-gray-400">
+                        <span>Subtotal</span>
+                        <span>$@Model.Total.ToString("N0")</span>
+                    </div>
+                    <div class="flex justify-between text-gray-400">
+                        <span>IVA</span>
+                        <span>$0</span>
+                    </div>
+                </div>
+
+                <div class="h-px bg-gray-100 my-4"></div>
+
+                <div class="flex justify-between items-baseline">
+                    <span class="font-semibold text-gray-900">Total</span>
+                    <div class="text-right">
+                        <p class="text-2xl font-bold text-gray-900">$@Model.Total.ToString("N0")</p>
+                        <p class="text-xs text-gray-400">COP</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Métodos aceptados -->
+            <div class="bg-white rounded-3xl px-6 py-4 shadow-sm border border-gray-100">
+                <p class="text-xs text-gray-400 text-center mb-3">Métodos aceptados</p>
+                <div class="flex justify-center gap-3">
+                    <div class="flex items-center gap-1 px-3 py-1.5 bg-gray-50 rounded-xl border border-gray-100 text-xs font-semibold text-gray-500">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-orange-400 -ml-1.5"></div>
+                        <span class="ml-1">Mastercard</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 rounded-xl border border-gray-100 text-xs font-semibold text-gray-500">
+                        <span class="text-blue-600 font-black italic text-sm">V</span>
+                        <span>Visa</span>
+                    </div>
+                </div>
+            </div>
+
         </div>
-
-   
-        <div class="flex-1 bg-gray-100 p-6 rounded-xl border border-gray-200 shadow-lg">
-            <h2 class="text-gray-600 text-xl md:text-2xl">Detalles de compra</h2>
-            <h1 class="text-3xl md:text-5xl mt-4">$@Model.Total.ToString("N0") COP</h1>
-
-            <div class="mt-6 space-y-2 text-gray-600 text-sm md:text-base">
-                <div class="flex justify-between"><span>Trayecto:</span> <span>@Model.Origen - @Model.Destino</span></div>
-                <div class="flex justify-between"><span>Fecha:</span> <span>@Model.Fecha</span></div>
-                <div class="flex justify-between"><span>Hora de salida:</span> <span>@Model.Hora</span></div>
-                <div class="flex justify-between"><span>Empresa:</span> <span>@Model.Empresa</span></div>
-                <div class="flex justify-between"><span>Duración aproximada:</span> <span>@Model.Duracion</span></div>
-            </div>
-
-            <div class="flex items-center my-8">
-                <div class="flex-1 h-px bg-black"></div>
-                <span class="mx-4 text-xl text-black"></span>
-                <div class="flex-1 h-px bg-black"></div>
-            </div>
-
-            <div class="space-y-1 text-black text-sm md:text-base">
-                <div class="flex justify-between"><span>IVA:</span> <span class="font-light">$0.00</span></div>
-                <div class="flex justify-between"><span>Total:</span> <span class="font-light">$@Model.Total.ToString("N0")</span></div>
-            </div>
-        </div>
-
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</main>
 
-    <script>
-        function confirmarPago() {
-            Swal.fire({
-                title: '¿Confirmar pago?',
-                text: '¿Deseas realizar el pago con los datos ingresados?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#284D67',
-                cancelButtonColor: '#aaa',
-                confirmButtonText: 'Sí, pagar',
-                cancelButtonText: 'Cancelar'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.querySelector('form').submit();
-                }
-            });
+<script>
+    // Formateo número de tarjeta
+    document.getElementById('inputTarjeta').addEventListener('input', function () {
+        let val = this.value.replace(/\D/g, '').slice(0, 16);
+        this.value = val.replace(/(.{4})/g, '$1 ').trim();
+        const masked = val.padEnd(16, '•');
+        document.getElementById('cardPreviewNum').textContent =
+            masked.replace(/(.{4})/g, '$1 ').trim();
+    });
+
+    // Formateo fecha expiración MM / AA
+    document.getElementById('inputValidez').addEventListener('input', function () {
+        let val = this.value.replace(/\D/g, '').slice(0, 4);
+        if (val.length >= 3) {
+            val = val.slice(0, 2) + ' / ' + val.slice(2);
+        } else if (val.length === 2 && !this.value.includes('/')) {
+            val = val + ' / ';
         }
-    </script>
+        this.value = val;
+        // Actualizar preview
+        const raw = this.value.replace(/\s/g, '');
+        if (raw.length >= 4) {
+            document.getElementById('cardPreviewExp').textContent =
+                raw.slice(0,2) + ' / ' + raw.slice(3,5);
+        }
+    });
 
-
+    function confirmarPago() {
+        Swal.fire({
+            title: '¿Confirmar pago?',
+            html: `<p class="text-gray-500 text-sm">Total a pagar: <strong class="text-gray-900">$@Model.Total.ToString("N0") COP</strong></p>`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#4f46e5',
+            cancelButtonColor: '#e5e7eb',
+            confirmButtonText: 'Sí, pagar',
+            cancelButtonText: 'Cancelar',
+            customClass: { cancelButton: '!text-gray-700' }
+        }).then(r => {
+            if (r.isConfirmed) document.getElementById('pagoForm').submit();
+        });
+    }
+</script>
 
 </body>
 </html>

@@ -1,231 +1,149 @@
-﻿@model List<Busticket.Models.ViewModels.ReporteVentaVM1>
-
+@model List<Busticket.Models.ViewModels.ReporteVentaVM1>
 @{
     Layout = null;
 }
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8" />
-    <title>Panel Administrativo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Busticket | Panel Administrativo</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
+<body class="bg-[#f7f8fa] text-gray-800">
+<partial name="_SharedHeader" />
+<main class="max-w-screen-lg mx-auto px-4 sm:px-6 lg:px-10 pt-28 pb-16">
 
-<body class="bg-gray-100">
+    <!-- Page heading -->
+    <div class="mb-8">
+        <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">Admin</p>
+        <h1 class="text-2xl font-bold text-gray-900">Panel Administrativo</h1>
+    </div>
 
-    <!-- HEADER -->
-    <header class="absolute top-0 inset-x-0 z-50">
-        <div class="max-w-7xl mx-auto px-10 py-6
-                flex items-center justify-between
-                text-black">
-
-            <!-- IZQUIERDA -->
-            <div class="flex items-center gap-6">
-
-                <!-- BOTÓN VOLVER -->
-                @if (Context.Request.Path != "/Home/Index")
-                {
-                    <button onclick="history.back()"
-                            class="flex items-center gap-2 text-sm tracking-widest uppercase
-                                   opacity-80 hover:opacity-100 transition group">
-
-                        <!-- ICONO FLECHA SVG -->
-                        <svg xmlns="http://www.w3.org/2000/svg"
-                             class="w-5 h-5 transform group-hover:-translate-x-1 transition duration-300"
-                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M15 19l-7-7 7-7" />
-                        </svg>
-
-                        Volver
-                    </button>
-                }
-
-                <!-- LOGO -->
-                <a href="/Home/Index"
-                   class="text-2xl tracking-widest uppercase font-semibold">
-                    Busticket
-                </a>
-
-            </div>
-
-            <!-- DERECHA -->
-            <div class="flex gap-10 text-sm tracking-widest uppercase items-center">
-
-                <!-- AYUDA -->
-                <a href="/Ayuda"
-                   class="relative
-                      after:content-[''] after:absolute after:left-0 after:-bottom-1
-                      after:w-0 after:h-[1px] after:bg-black
-                      after:transition-all after:duration-300
-                      hover:after:w-full">
-                    Ayuda
-                </a>
-
-                @if (User.Identity != null && User.Identity.IsAuthenticated)
-                {
-                    <!-- PERFIL -->
-                    <a href="/Perfil"
-                       title="Mi cuenta"
-                       class="flex items-center justify-center w-10 h-10
-                              rounded-full border border-black
-                              hover:bg-black hover:text-white transition">
-                        👤
-                    </a>
-
-                    <!-- LOGOUT -->
-                    <form asp-controller="Auth"
-                          asp-action="Logout"
-                          method="post"
-                          class="inline">
-                        <button type="submit"
-                                class="relative
-                                       after:content-[''] after:absolute after:left-0 after:-bottom-1
-                                       after:w-0 after:h-[1px] after:bg-black
-                                       after:transition-all after:duration-300
-                                       hover:after:w-full">
-                            Cerrar sesión
-                        </button>
-                    </form>
-                }
-                else
-                {
-                    <!-- LOGIN -->
-                    <a href="/Auth/Login"
-                       class="relative
-                              after:content-[''] after:absolute after:left-0 after:-bottom-1
-                              after:w-0 after:h-[1px] after:bg-black
-                              after:transition-all after:duration-300
-                              hover:after:w-full">
-                        Iniciar sesión
-                    </a>
-                }
-
-                @if (User.IsInRole("Admin"))
-                {
-                    <a href="/Admin/Index"
-                       class="relative
-                              after:content-[''] after:absolute after:left-0 after:-bottom-1
-                              after:w-0 after:h-[1px] after:bg-black
-                              after:transition-all after:duration-300
-                              hover:after:w-full">
-                        Admin
-                    </a>
-                }
-
-                @if (User.IsInRole("Empresa"))
-                {
-                    <a href="/Empresa/Dashboard"
-                       class="relative
-                              after:content-[''] after:absolute after:left-0 after:-bottom-1
-                              after:w-0 after:h-[1px] after:bg-black
-                              after:transition-all after:duration-300
-                              hover:after:w-full">
-                        Empresa
-                    </a>
-                }
-
-            </div>
+    <!-- Stat cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sm:p-8">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Total ventas</p>
+            <p class="text-3xl font-bold text-gray-900">@Model.Count</p>
         </div>
-    </header>
-
-    <!-- CONTENIDO -->
-    <div class="max-w-5xl mx-auto mt-14 px-4">
-
-        <h1 class="text-4xl font-bold text-gray-800 mb-10 text-center">
-            Panel Administrativo
-        </h1>
-
-        <!-- BOTONES -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-12">
-
-            <a asp-controller="Admin" asp-action="Rutas"
-               class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-xl shadow-md text-center font-semibold transition">
-                Ver Rutas
-            </a>
-
-            <a asp-controller="Empresa" asp-action="Index"
-               class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-xl shadow-md text-center font-semibold transition">
-                Ver Empresa
-            </a>
-
-            <a asp-controller="Admin" asp-action="Dashboard"
-               class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-4 rounded-xl shadow-md text-center font-semibold transition">
-                Ver Dashboard
-            </a>
-
+        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sm:p-8">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Ingresos totales</p>
+            <p class="text-3xl font-bold text-gray-900">$@Model.Sum(v => v.Precio).ToString("N0") COP</p>
         </div>
+        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sm:p-8">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Empresas unicas</p>
+            <p class="text-3xl font-bold text-gray-900">@Model.Select(v => v.Empresa).Distinct().Count()</p>
+        </div>
+    </div>
 
-
-        <!-- FILTROS + EXCEL -->
-        <div class="bg-white p-5 rounded-xl shadow mb-6 flex flex-wrap gap-4 items-end">
-
+    <!-- Quick links -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <a asp-controller="Admin" asp-action="Rutas"
+           class="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 flex items-center gap-4 hover:border-indigo-200 hover:shadow-md transition group">
+            <div class="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-50 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 group-hover:text-indigo-500 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+            </div>
             <div>
-                <label class="block text-sm font-semibold text-gray-600">Desde</label>
+                <p class="text-sm font-semibold text-gray-800">Ver Rutas</p>
+                <p class="text-xs text-gray-400">Gestionar rutas</p>
+            </div>
+        </a>
+        <a asp-controller="Empresa" asp-action="Index"
+           class="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 flex items-center gap-4 hover:border-indigo-200 hover:shadow-md transition group">
+            <div class="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-50 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 group-hover:text-indigo-500 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-gray-800">Empresas</p>
+                <p class="text-xs text-gray-400">Gestionar empresas</p>
+            </div>
+        </a>
+        <a asp-controller="Admin" asp-action="Dashboard"
+           class="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 flex items-center gap-4 hover:border-indigo-200 hover:shadow-md transition group">
+            <div class="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-50 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 group-hover:text-indigo-500 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-gray-800">Dashboard</p>
+                <p class="text-xs text-gray-400">Ver estadisticas</p>
+            </div>
+        </a>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 mb-6">
+        <div class="flex flex-wrap gap-4 items-end">
+            <div>
+                <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">Desde</label>
                 <input type="date" id="fechaInicio"
-                       class="border rounded px-3 py-2 text-sm">
+                       class="border border-gray-200 rounded-2xl px-4 py-2.5 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition" />
             </div>
-
             <div>
-                <label class="block text-sm font-semibold text-gray-600">Hasta</label>
+                <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">Hasta</label>
                 <input type="date" id="fechaFin"
-                       class="border rounded px-3 py-2 text-sm">
+                       class="border border-gray-200 rounded-2xl px-4 py-2.5 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition" />
             </div>
-
-            <button type="button"
-                    onclick="filtrarTabla()"
-                    class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+            <button type="button" onclick="filtrarTabla()"
+                    class="bg-gray-900 text-white px-5 py-2.5 rounded-2xl text-sm font-semibold hover:bg-indigo-600 transition-colors duration-200">
                 Filtrar
             </button>
-
-            <button type="button"
-                    onclick="exportarExcel()"
-                    class="ml-auto bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
-                 Descargar Excel
+            <button type="button" onclick="exportarExcel()"
+                    class="ml-auto border border-gray-200 text-gray-600 px-5 py-2.5 rounded-2xl text-sm font-medium hover:bg-gray-50 transition-colors">
+                Exportar Excel
             </button>
         </div>
+    </div>
 
-        <!-- TABLA -->
+    <!-- Table card -->
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="overflow-x-auto">
-            <table id="tablaVentas"
-                   class="w-full bg-white shadow-md rounded-lg overflow-hidden">
-
-                <thead class="bg-gray-200 text-gray-700">
+            <table id="tablaVentas" class="w-full">
+                <thead>
                     <tr>
-                        <th class="px-4 py-2 text-left">Venta ID</th>
-                        <th class="px-4 py-2 text-left">Usuario</th>
-                        <th class="px-4 py-2 text-left">Empresa</th>
-                        <th class="px-4 py-2 text-left">Precio</th>
-                        <th class="px-4 py-2 text-left">Fecha</th>
+                        <th class="text-xs uppercase tracking-widest text-gray-400 font-semibold px-6 py-4 text-left bg-gray-50 border-b border-gray-100">Venta ID</th>
+                        <th class="text-xs uppercase tracking-widest text-gray-400 font-semibold px-6 py-4 text-left bg-gray-50 border-b border-gray-100">Usuario</th>
+                        <th class="text-xs uppercase tracking-widest text-gray-400 font-semibold px-6 py-4 text-left bg-gray-50 border-b border-gray-100">Empresa</th>
+                        <th class="text-xs uppercase tracking-widest text-gray-400 font-semibold px-6 py-4 text-left bg-gray-50 border-b border-gray-100">Precio</th>
+                        <th class="text-xs uppercase tracking-widest text-gray-400 font-semibold px-6 py-4 text-left bg-gray-50 border-b border-gray-100">Fecha</th>
                     </tr>
                 </thead>
-
                 <tbody>
                     @foreach (var item in Model)
                     {
-                        <tr class="border-b hover:bg-gray-50 transition"
+                        <tr class="hover:bg-gray-50 transition-colors border-b border-gray-100"
                             data-fecha="@item.Fecha.ToString("yyyy-MM-dd")">
-
-                            <td class="px-4 py-2">@item.VentaId</td>
-                            <td class="px-4 py-2">@item.Usuario</td>
-                            <td class="px-4 py-2">@item.Empresa</td>
-                            <td class="px-4 py-2 font-semibold text-green-600">
-                                $@item.Precio.ToString("N0")
+                            <td class="px-6 py-4 text-sm text-gray-700">@item.VentaId</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">@item.Usuario</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">@item.Empresa</td>
+                            <td class="px-6 py-4 text-sm">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700">
+                                    $@item.Precio.ToString("N0") COP
+                                </span>
                             </td>
-                            <td class="px-4 py-2">@item.Fecha.ToString("dd/MM/yyyy")</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">@item.Fecha.ToString("dd/MM/yyyy")</td>
                         </tr>
                     }
                 </tbody>
-
-
             </table>
         </div>
+    </div>
 
-    </div>  
-
-   <script src="~/js/admin.js"></script>
-
+</main>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const success = '@TempData["SuccessMessage"]';
+        const error   = '@TempData["ErrorMessage"]';
+        if (success && success.trim()) Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: success, showConfirmButton: false, timer: 2500 });
+        if (error   && error.trim())   Swal.fire({ toast: true, position: 'top-end', icon: 'error',   title: error,   showConfirmButton: false, timer: 3000 });
+    });
+</script>
+<script src="~/js/admin.js"></script>
 </body>
 </html>

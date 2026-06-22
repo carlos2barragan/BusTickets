@@ -1,258 +1,223 @@
-﻿@{
+@{
     Layout = null;
-    
 }
-<partial name="_DarkModeScript" />
-<script src="https://cdn.tailwindcss.com"></script>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"]</title>
-    <link href="~/css/ModeDark.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    <title>Busticket | Ayuda</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
-
-        body {
-            background: #f4f6f8;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 60px auto;
-            padding: 0 20px;
-        }
-
-        .title {
-            font-size: 32px;
-            font-weight: 700;
-            color: #1d3557;
-            margin-bottom: 30px;
-        }
-
-        .card {
-            background: #fff;
-            border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 6px 16px rgba(0,0,0,.06);
-        }
-
-            .card h3 {
-                font-size: 18px;
-                margin-bottom: 10px;
-                color: #1d3557;
-            }
-
-            .card p {
-                color: #555;
-                line-height: 1.6;
-            }
-
-        .contact {
-            background: #1d3557;
-            color: #fff;
-            border-radius: 12px;
-            padding: 25px;
-            margin-top: 30px;
-        }
-
-            .contact h3 {
-                margin-bottom: 10px;
-            }
-
-            .contact p {
-                opacity: .9;
-            }
-
-        .btn {
-            display: inline-block;
-            margin-top: 15px;
-            background: #fff;
-            color: #1d3557;
-            padding: 12px 18px;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: .2s;
-        }
-
-            .btn:hover {
-                background: #e6e6e6;
-            }
+        body { font-family: 'Inter', sans-serif; }
+        .faq-answer { display: none; }
+        .faq-item.open .faq-answer { display: block; }
+        .faq-item.open .faq-icon { transform: rotate(45deg); }
+        .faq-icon { transition: transform .25s ease; }
     </style>
 </head>
+<body class="bg-[#f7f8fa] text-gray-800">
 
-<body>
-    <!-- HEADER -->
-    <header class="absolute top-0 inset-x-0 z-50">
-        <div class="max-w-7xl mx-auto px-10 py-6
-                flex items-center justify-between
-                text-black">
+<partial name="_SharedHeader" />
 
-            <!-- IZQUIERDA -->
-            <div class="flex items-center gap-6">
+<main class="max-w-screen-md mx-auto px-4 sm:px-6 pt-28 pb-20">
 
-                <!-- BOTÓN VOLVER -->
-                @if (Context.Request.Path != "/Home/Index")
-                {
-                    <button onclick="history.back()"
-                            class="flex items-center gap-2 text-sm tracking-widest uppercase
-                                   opacity-80 hover:opacity-100 transition group">
-
-                        <!-- ICONO FLECHA SVG -->
-                        <svg xmlns="http://www.w3.org/2000/svg"
-                             class="w-5 h-5 transform group-hover:-translate-x-1 transition duration-300"
-                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M15 19l-7-7 7-7" />
-                        </svg>
-
-                        Volver
-                    </button>
-                }
-
-                <!-- LOGO -->
-                <a href="/Home/Index"
-                   class="text-2xl tracking-widest uppercase font-semibold">
-                    Busticket
-                </a>
-
-            </div>
-
-            <!-- DERECHA -->
-            <div class="flex gap-10 text-sm tracking-widest uppercase items-center">
-
-                <!-- AYUDA -->
-                <a href="/Ayuda"
-                   class="relative
-                      after:content-[''] after:absolute after:left-0 after:-bottom-1
-                      after:w-0 after:h-[1px] after:bg-black
-                      after:transition-all after:duration-300
-                      hover:after:w-full">
-                    Ayuda
-                </a>
-
-                @if (User.Identity != null && User.Identity.IsAuthenticated)
-                {
-                    <!-- PERFIL -->
-                    <a href="/Perfil"
-                       title="Mi cuenta"
-                       class="flex items-center justify-center w-10 h-10
-                              rounded-full border border-black
-                              hover:bg-black hover:text-white transition">
-                        👤
-                    </a>
-
-                    <!-- LOGOUT -->
-                    <form asp-controller="Auth"
-                          asp-action="Logout"
-                          method="post"
-                          class="inline">
-                        <button type="submit"
-                                class="relative
-                                       after:content-[''] after:absolute after:left-0 after:-bottom-1
-                                       after:w-0 after:h-[1px] after:bg-black
-                                       after:transition-all after:duration-300
-                                       hover:after:w-full">
-                            Cerrar sesión
-                        </button>
-                    </form>
-                }
-                else
-                {
-                    <!-- LOGIN -->
-                    <a href="/Auth/Login"
-                       class="relative
-                              after:content-[''] after:absolute after:left-0 after:-bottom-1
-                              after:w-0 after:h-[1px] after:bg-black
-                              after:transition-all after:duration-300
-                              hover:after:w-full">
-                        Iniciar sesión
-                    </a>
-                }
-
-                @if (User.IsInRole("Admin"))
-                {
-                    <a href="/Admin/Index"
-                       class="relative
-                              after:content-[''] after:absolute after:left-0 after:-bottom-1
-                              after:w-0 after:h-[1px] after:bg-black
-                              after:transition-all after:duration-300
-                              hover:after:w-full">
-                        Admin
-                    </a>
-                }
-
-                @if (User.IsInRole("Empresa"))
-                {
-                    <a href="/Empresa/Dashboard"
-                       class="relative
-                              after:content-[''] after:absolute after:left-0 after:-bottom-1
-                              after:w-0 after:h-[1px] after:bg-black
-                              after:transition-all after:duration-300
-                              hover:after:w-full">
-                        Empresa
-                    </a>
-                }
-
-            </div>
-        </div>
-    </header>
-    <div class="container">
-        <div class="title">Centro de Ayuda</div>
-
-        <div class="card">
-            <h3>📌 ¿Cómo comprar un boleto?</h3>
-            <p>
-                Selecciona tu ruta, fecha de viaje y asiento disponible.
-                Luego completa el pago y recibirás tu boleto en tu cuenta.
-            </p>
-        </div>
-
-        <div class="card">
-            <h3>👤 Problemas con tu cuenta</h3>
-            <p>
-                Si olvidaste tu contraseña, puedes recuperarla desde la opción
-                <strong>“¿Olvidaste tu contraseña?”</strong> en el inicio de sesión.
-            </p>
-        </div>
-
-        <div class="card">
-            <h3>🚌 Gestión de viajes</h3>
-            <p>
-                Desde tu perfil puedes ver tus próximos viajes,
-                el historial y los detalles de cada boleto comprado.
-            </p>
-        </div>
-
-        <div class="card">
-            <h3>💳 Pagos y facturación</h3>
-            <p>
-                Aceptamos múltiples métodos de pago.
-                Si tu pago fue rechazado, verifica con tu entidad bancaria.
-            </p>
-        </div>
-
-        <div class="contact">
-            <h3>📞 ¿Necesitas más ayuda?</h3>
-            <p>
-                Escríbenos y nuestro equipo de soporte te ayudará lo antes posible.
-            </p>
-
-            <a href="https://wa.me/573196328638?text=Hola%20necesito%20ayuda%20con%20Busticket" target="_blank" class="btn">
-                Contactar soporte por WhatsApp
-            </a>
-        </div>
+    <!-- Hero -->
+    <div class="text-center mb-12">
+        <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Soporte</p>
+        <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">¿En qué te podemos ayudar?</h1>
+        <p class="text-gray-400 text-sm max-w-sm mx-auto">Encuentra respuestas rápidas a las preguntas más comunes sobre Busticket.</p>
     </div>
+
+    <!-- Categorías rápidas -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10">
+        @foreach (var cat in new[] {
+            new { Icon = "🎫", Label = "Comprar boleto",  Href = "#comprar"  },
+            new { Icon = "👤", Label = "Mi cuenta",       Href = "#cuenta"   },
+            new { Icon = "🚌", Label = "Mis viajes",      Href = "#viajes"   },
+            new { Icon = "💳", Label = "Pagos",           Href = "#pagos"    },
+        })
+        {
+            <a href="@cat.Href"
+               class="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col items-center gap-2
+                      hover:border-indigo-200 hover:shadow-md transition text-center group">
+                <span class="text-2xl">@cat.Icon</span>
+                <span class="text-xs font-semibold text-gray-600 group-hover:text-indigo-600 transition">@cat.Label</span>
+            </a>
+        }
+    </div>
+
+    <!-- FAQ: Comprar boleto -->
+    <section id="comprar" class="mb-8">
+        <h2 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">Comprar boleto</h2>
+        <div class="bg-white rounded-3xl border border-gray-100 shadow-sm divide-y divide-gray-100 overflow-hidden">
+
+            <div class="faq-item">
+                <button onclick="toggleFaq(this)"
+                        class="w-full flex items-center justify-between px-6 py-5 text-left">
+                    <span class="text-sm font-semibold text-gray-800">¿Cómo compro un boleto?</span>
+                    <span class="faq-icon text-gray-400 text-xl font-light ml-4 flex-shrink-0">+</span>
+                </button>
+                <div class="faq-answer px-6 pb-5 text-sm text-gray-500 leading-relaxed">
+                    Ve a <strong>Rutas</strong>, elige tu destino y fecha, selecciona los asientos que quieras
+                    y agrégalos al carrito. Después completa el pago con tu tarjeta y recibirás
+                    el boleto en tu cuenta y por correo electrónico.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button onclick="toggleFaq(this)"
+                        class="w-full flex items-center justify-between px-6 py-5 text-left">
+                    <span class="text-sm font-semibold text-gray-800">¿Puedo comprar varios asientos a la vez?</span>
+                    <span class="faq-icon text-gray-400 text-xl font-light ml-4 flex-shrink-0">+</span>
+                </button>
+                <div class="faq-answer px-6 pb-5 text-sm text-gray-500 leading-relaxed">
+                    Sí. En el mapa de asientos puedes seleccionar varios antes de agregar al carrito.
+                    Todos quedarán en la misma orden de compra.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button onclick="toggleFaq(this)"
+                        class="w-full flex items-center justify-between px-6 py-5 text-left">
+                    <span class="text-sm font-semibold text-gray-800">¿Dónde descargo mi boleto?</span>
+                    <span class="faq-icon text-gray-400 text-xl font-light ml-4 flex-shrink-0">+</span>
+                </button>
+                <div class="faq-answer px-6 pb-5 text-sm text-gray-500 leading-relaxed">
+                    Tras confirmar el pago aparece un botón <strong>"Descargar boleto (PDF)"</strong>.
+                    También puedes descargarlo en cualquier momento desde tu perfil, sección <em>Mis viajes</em>.
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- FAQ: Mi cuenta -->
+    <section id="cuenta" class="mb-8">
+        <h2 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">Mi cuenta</h2>
+        <div class="bg-white rounded-3xl border border-gray-100 shadow-sm divide-y divide-gray-100 overflow-hidden">
+
+            <div class="faq-item">
+                <button onclick="toggleFaq(this)"
+                        class="w-full flex items-center justify-between px-6 py-5 text-left">
+                    <span class="text-sm font-semibold text-gray-800">Olvidé mi contraseña, ¿qué hago?</span>
+                    <span class="faq-icon text-gray-400 text-xl font-light ml-4 flex-shrink-0">+</span>
+                </button>
+                <div class="faq-answer px-6 pb-5 text-sm text-gray-500 leading-relaxed">
+                    En la pantalla de inicio de sesión haz clic en <strong>"¿Olvidaste tu contraseña?"</strong>.
+                    Te enviaremos un enlace de recuperación al correo registrado.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button onclick="toggleFaq(this)"
+                        class="w-full flex items-center justify-between px-6 py-5 text-left">
+                    <span class="text-sm font-semibold text-gray-800">¿Cómo cambio mis datos personales?</span>
+                    <span class="faq-icon text-gray-400 text-xl font-light ml-4 flex-shrink-0">+</span>
+                </button>
+                <div class="faq-answer px-6 pb-5 text-sm text-gray-500 leading-relaxed">
+                    Ingresa a <strong>Mi perfil</strong> (ícono de usuario en la esquina superior derecha)
+                    y actualiza la información que necesites.
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- FAQ: Mis viajes -->
+    <section id="viajes" class="mb-8">
+        <h2 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">Mis viajes</h2>
+        <div class="bg-white rounded-3xl border border-gray-100 shadow-sm divide-y divide-gray-100 overflow-hidden">
+
+            <div class="faq-item">
+                <button onclick="toggleFaq(this)"
+                        class="w-full flex items-center justify-between px-6 py-5 text-left">
+                    <span class="text-sm font-semibold text-gray-800">¿Dónde veo mis próximos viajes?</span>
+                    <span class="faq-icon text-gray-400 text-xl font-light ml-4 flex-shrink-0">+</span>
+                </button>
+                <div class="faq-answer px-6 pb-5 text-sm text-gray-500 leading-relaxed">
+                    Desde <strong>Mi perfil</strong> puedes ver el historial completo de compras,
+                    los detalles de cada boleto y descargarlo en PDF.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button onclick="toggleFaq(this)"
+                        class="w-full flex items-center justify-between px-6 py-5 text-left">
+                    <span class="text-sm font-semibold text-gray-800">¿Puedo cancelar o cambiar mi viaje?</span>
+                    <span class="faq-icon text-gray-400 text-xl font-light ml-4 flex-shrink-0">+</span>
+                </button>
+                <div class="faq-answer px-6 pb-5 text-sm text-gray-500 leading-relaxed">
+                    Los cambios y cancelaciones dependen de la política de la empresa transportadora.
+                    Contacta a soporte con el número de tu orden para que podamos ayudarte.
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- FAQ: Pagos -->
+    <section id="pagos" class="mb-10">
+        <h2 class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">Pagos</h2>
+        <div class="bg-white rounded-3xl border border-gray-100 shadow-sm divide-y divide-gray-100 overflow-hidden">
+
+            <div class="faq-item">
+                <button onclick="toggleFaq(this)"
+                        class="w-full flex items-center justify-between px-6 py-5 text-left">
+                    <span class="text-sm font-semibold text-gray-800">¿Qué métodos de pago aceptan?</span>
+                    <span class="faq-icon text-gray-400 text-xl font-light ml-4 flex-shrink-0">+</span>
+                </button>
+                <div class="faq-answer px-6 pb-5 text-sm text-gray-500 leading-relaxed">
+                    Aceptamos tarjetas de crédito y débito Visa, Mastercard y American Express.
+                    El pago es procesado de forma segura.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button onclick="toggleFaq(this)"
+                        class="w-full flex items-center justify-between px-6 py-5 text-left">
+                    <span class="text-sm font-semibold text-gray-800">Mi pago fue rechazado, ¿qué hago?</span>
+                    <span class="faq-icon text-gray-400 text-xl font-light ml-4 flex-shrink-0">+</span>
+                </button>
+                <div class="faq-answer px-6 pb-5 text-sm text-gray-500 leading-relaxed">
+                    Verifica que los datos de tu tarjeta estén correctos y que tengas fondos suficientes.
+                    Si el problema persiste, comunícate con tu banco o contáctanos por WhatsApp.
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Contacto -->
+    <div class="bg-gray-900 rounded-3xl p-8 text-center">
+        <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">¿Aún tienes dudas?</p>
+        <h3 class="text-xl font-bold text-white mb-2">Habla con nuestro equipo</h3>
+        <p class="text-sm text-gray-400 mb-6">Te respondemos en menos de 24 horas.</p>
+        <a href="https://wa.me/573196328638?text=Hola%20necesito%20ayuda%20con%20Busticket"
+           target="_blank"
+           class="inline-flex items-center gap-2 bg-white text-gray-900 px-6 py-3 rounded-2xl text-sm
+                  font-semibold hover:bg-indigo-50 hover:text-indigo-700 transition-colors duration-200">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.849L.057 23.5l5.797-1.522A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.015-1.375l-.36-.213-3.44.903.917-3.35-.234-.375A9.818 9.818 0 1112 21.818z"/>
+            </svg>
+            Contactar por WhatsApp
+        </a>
+    </div>
+
+</main>
+
+<script>
+    function toggleFaq(btn) {
+        const item = btn.closest('.faq-item');
+        const isOpen = item.classList.contains('open');
+        // Close all
+        document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+        // Open clicked (unless it was already open)
+        if (!isOpen) item.classList.add('open');
+    }
+</script>
 
 </body>
 </html>

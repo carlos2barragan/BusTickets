@@ -70,7 +70,7 @@ namespace Busticket.Controllers
         public IActionResult CrearRuta()
         {
             ViewBag.Ciudades = _context.Ciudad.ToList();
-            return View(new Ruta());
+            return View(new Ruta { FechaSalida = DateTime.Now, FechaLlegada = DateTime.Now.AddHours(1) });
         }
         [HttpGet]
         public async Task<IActionResult> EditarRuta(int id)
@@ -166,16 +166,24 @@ namespace Busticket.Controllers
                 .FirstAsync(e => e.UserId == userId);
 
             ruta.EmpresaId = empresa.EmpresaId;
+            ruta.TipoBus ??= "Normal";
+            ruta.NumAsientos ??= 20;
 
             _context.Ruta.Add(ruta);
             await _context.SaveChangesAsync();
 
-            var asientos = Enumerable.Range(1, 20)
-                .Select(i => new Asiento { Numero = i, RutaId = ruta.RutaId });
+            var asientos = Enumerable.Range(1, ruta.NumAsientos.Value).Select(i => new Asiento
+            {
+                Numero = i,
+                Codigo = i.ToString(),
+                RutaId = ruta.RutaId,
+                Disponible = true
+            });
 
             _context.Asiento.AddRange(asientos);
             await _context.SaveChangesAsync();
 
+            TempData["SuccessMessage"] = $"Ruta creada con {ruta.NumAsientos} asientos ({ruta.TipoBus}).";
             return RedirectToAction(nameof(Rutas));
         }
     }

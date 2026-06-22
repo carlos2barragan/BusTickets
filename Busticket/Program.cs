@@ -13,7 +13,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Base de Datos
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection")
+    )
 );
 
 // Identity (Autenticación y Roles)
@@ -69,7 +71,7 @@ else
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 // Configuración de Archivos Estáticos y tipos MIME (GLB para modelos 3D)
 var provider = new FileExtensionContentTypeProvider();

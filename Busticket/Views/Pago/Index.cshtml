@@ -32,10 +32,9 @@
                 <!-- Chip -->
                 <div class="absolute top-6 left-7 w-10 h-7 rounded-md bg-amber-300/80"
                      style="background:linear-gradient(135deg,#fbbf24,#f59e0b)"></div>
-                <!-- Network logo -->
-                <div class="absolute top-5 right-7 flex">
-                    <div class="w-9 h-9 rounded-full bg-red-500/80"></div>
-                    <div class="w-9 h-9 rounded-full bg-orange-400/80 -ml-4"></div>
+                <!-- Network logo (cambia dinámicamente con JS) -->
+                <div id="cardBrandIcon" class="absolute top-5 right-7 flex items-center">
+                    <!-- Sin marca por defecto -->
                 </div>
                 <!-- Number -->
                 <p id="cardPreviewNum"
@@ -272,6 +271,24 @@
 </main>
 
 <script>
+    const BRAND_HTML = {
+        visa: `<span class="text-white font-black italic tracking-tight"
+                    style="font-size:1.4rem;letter-spacing:-.02em;font-family:sans-serif">VISA</span>`,
+        mastercard: `<div class="flex"><div class="w-9 h-9 rounded-full bg-red-500/90"></div>
+                     <div class="w-9 h-9 rounded-full bg-orange-400/90 -ml-4"></div></div>`
+    };
+
+    function detectBrand(digits) {
+        if (/^4/.test(digits)) return 'visa';
+        if (/^5[1-5]/.test(digits) || /^2[2-7]/.test(digits)) return 'mastercard';
+        return null;
+    }
+
+    function actualizarLogo(digits) {
+        const brand = detectBrand(digits);
+        document.getElementById('cardBrandIcon').innerHTML = brand ? BRAND_HTML[brand] : '';
+    }
+
     // Formateo número de tarjeta
     document.getElementById('inputTarjeta').addEventListener('input', function () {
         let val = this.value.replace(/\D/g, '').slice(0, 16);
@@ -279,6 +296,7 @@
         const masked = val.padEnd(16, '•');
         document.getElementById('cardPreviewNum').textContent =
             masked.replace(/(.{4})/g, '$1 ').trim();
+        actualizarLogo(val);
     });
 
     // Formateo fecha expiración MM / AA
@@ -290,7 +308,6 @@
             val = val + ' / ';
         }
         this.value = val;
-        // Actualizar preview
         const raw = this.value.replace(/\s/g, '');
         if (raw.length >= 4) {
             document.getElementById('cardPreviewExp').textContent =
@@ -298,20 +315,97 @@
         }
     });
 
-    function confirmarPago() {
+    // Algoritmo de Luhn — verifica que el número de tarjeta sea estructuralmente válido
+    function luhn(num) {
+        let sum = 0, alt = false;
+        for (let i = num.length - 1; i >= 0; i--) {
+            let d = parseInt(num[i], 10);
+            if (alt) { d *= 2; if (d > 9) d -= 9; }
+            sum += d;
+            alt = !alt;
+        }
+        return sum % 10 === 0;
+    }
+
+    function validarTarjeta() {
+        const nombre   = document.getElementById('inputNombre').value.trim();
+        const numero   = document.getElementById('inputTarjeta').value.replace(/\s/g, '');
+        const validez  = document.getElementById('inputValidez').value.replace(/\s/g, '');
+        const cvc      = document.getElementById('inputCVC').value.trim();
+
+        if (!nombre) return 'Ingresa el nombre del titular.';
+        if (numero.length !== 16 || !/^\d+$/.test(numero))
+            return 'El número de tarjeta debe tener 16 dígitos.';
+        if (!detectBrand(numero))
+            return 'Solo aceptamos Visa (empieza en 4) o Mastercard (empieza en 51–55 / 2221–2720).';
+        if (!luhn(numero))
+            return 'El número de tarjeta no es válido.';
+
+        // Validar fecha MM/AA
+        const partes = validez.replace('/', '').match(/^(\d{2})(\d{2})$/);
+        if (!partes) return 'La fecha de vencimiento no es válida (MM/AA).';
+        const mm = parseInt(partes[1], 10);
+        const aa = parseInt(partes[2], 10) + 2000;
+        if (mm < 1 || mm > 12) return 'El mes de vencimiento no es válido.';
+        const ahora = new Date();
+        const vence = new Date(aa, mm - 1, 1); // primer día del mes de vencimiento
+        const hoy   = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+        if (vence < hoy) return 'La tarjeta está vencida.';
+
+        if (!/^\d{3}$/.test(cvc)) return 'El CVC debe tener 3 dígitos.';
+
+        return null; // sin errores
+    }
+
+    async function confirmarPago() {
+        const error = validarTarjeta();
+        if (error) {
+            Swal.fire({
+                title: 'Datos inválidos',
+                text: error,
+                icon: 'error',
+                confirmButtonColor: '#4f46e5',
+                confirmButtonText: 'Entendido'
+            });
+            return;
+        }
+
+        // Paso 1: simular verificación de tarjeta
         Swal.fire({
-            title: '¿Confirmar pago?',
-            html: `<p class="text-gray-500 text-sm">Total a pagar: <strong class="text-gray-900">$@Model.Total.ToString("N0") COP</strong></p>`,
-            icon: 'question',
+            title: 'Verificando tarjeta...',
+            html: '<p class="text-gray-500 text-sm">Estamos validando tus datos con el banco.</p>',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        await new Promise(r => setTimeout(r, 2200));
+
+        // Paso 2: confirmación final
+        const result = await Swal.fire({
+            title: 'Tarjeta verificada',
+            html: `
+                <p class="text-gray-500 text-sm mb-1">¿Confirmas el pago de</p>
+                <p class="text-2xl font-bold text-gray-900">$@Model.Total.ToString("N0") COP</p>
+            `,
+            icon: 'success',
             showCancelButton: true,
             confirmButtonColor: '#4f46e5',
             cancelButtonColor: '#e5e7eb',
-            confirmButtonText: 'Sí, pagar',
+            confirmButtonText: 'Sí, pagar ahora',
             cancelButtonText: 'Cancelar',
             customClass: { cancelButton: '!text-gray-700' }
-        }).then(r => {
-            if (r.isConfirmed) document.getElementById('pagoForm').submit();
         });
+
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: 'Procesando pago...',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: () => Swal.showLoading()
+            });
+            document.getElementById('pagoForm').submit();
+        }
     }
 </script>
 

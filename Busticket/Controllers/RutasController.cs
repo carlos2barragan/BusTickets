@@ -9,7 +9,6 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Busticket.DTOs;
 namespace Busticket.Controllers
 {
     [AllowAnonymous]
@@ -91,7 +90,7 @@ namespace Busticket.Controllers
         }
 
         // =========================
-        // SELECCIÓN INDIVIDUAL
+        // SELECCIï¿½N INDIVIDUAL
         // =========================
         [HttpPost]
         public IActionResult SeleccionarAsiento(int asientoNumero, int precio)

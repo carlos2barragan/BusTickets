@@ -23,6 +23,12 @@ namespace Busticket.Models
         public required string Hora { get; set; }
 
         // =========================
+        // DATOS DEL PASAJERO
+        // =========================
+        public string DocumentoPasajero { get; set; } = "";
+        public string TelefonoPasajero { get; set; } = "";
+
+        // =========================
         // TARJETA (FAKE / UI)
         // ❌ NO VALIDAR
         // =========================

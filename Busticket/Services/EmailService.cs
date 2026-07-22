@@ -19,8 +19,8 @@ namespace Busticket.Services
             byte[] pdf,
             string nombrePdf)
         {
-            var correoEmisor = _config["Email:Correo"];
-            var clave = _config["Email:Clave"];
+            var correoEmisor = _config["Email:Correo"] ?? "soporte@busticket.com";
+            var clave = _config["Email:Clave"] ?? "";
 
             var smtp = new SmtpClient("smtp.gmail.com", 587)
             {

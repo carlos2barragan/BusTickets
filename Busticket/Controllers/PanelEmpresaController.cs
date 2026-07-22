@@ -31,6 +31,12 @@ namespace Busticket.Controllers
             var empresa = await _context.Empresa
                 .FirstOrDefaultAsync(e => e.UserId == userId);
 
+            if (empresa == null)
+            {
+                TempData["ErrorMessage"] = "No tienes una empresa registrada.";
+                return RedirectToAction("Index", "Home");
+            }
+
             var ventas = await _context.Venta
                 .Where(v => v.EmpresaId == empresa.EmpresaId)
                 .Include(v => v.User)
@@ -163,7 +169,13 @@ namespace Busticket.Controllers
             var userId = _userManager.GetUserId(User);
 
             var empresa = await _context.Empresa
-                .FirstAsync(e => e.UserId == userId);
+                .FirstOrDefaultAsync(e => e.UserId == userId);
+
+            if (empresa == null)
+            {
+                TempData["ErrorMessage"] = "No tienes una empresa registrada.";
+                return RedirectToAction("Index", "Home");
+            }
 
             ruta.EmpresaId = empresa.EmpresaId;
             ruta.TipoBus ??= "Normal";

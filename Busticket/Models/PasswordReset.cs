@@ -14,6 +14,8 @@ namespace Busticket.Models
         [Required]
         public Guid Token { get; set; }
 
+        public string? IdentityToken { get; set; }
+
         [Required]
         public DateTime FechaExpiracion { get; set; }
 

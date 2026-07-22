@@ -4,8 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using Busticket.Data;
 using Busticket.Models;
 using Busticket.DTOs;
+using Microsoft.AspNetCore.Authorization;
 namespace Busticket.Controllers
 {
+    [Authorize]
     public class PerfilController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -21,21 +23,21 @@ namespace Busticket.Controllers
 
         public async Task<IActionResult> Index()
         {
-            // 🔐 Usuario logueado
             var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return RedirectToAction("Login", "Auth");
 
             var cliente = await _context.Cliente
                 .FirstOrDefaultAsync(c => c.UserId == user.Id);
 
             var model = new PerfilViewModel
             {
-                Nombre = cliente?.Nombre ?? "",
+                Nombre = !string.IsNullOrWhiteSpace(cliente?.Nombre) ? cliente.Nombre : (user.UserName ?? ""),
                 Documento = cliente?.Documento ?? "",
                 Telefono = cliente?.Telefono ?? "",
                 Correo = user.Email!,
             };
 
-            // 🚌 Historial de viajes (últimos 5)
             var viajes = await _context.Boleto
                 .Include(b => b.Ruta)
                     .ThenInclude(r => r.CiudadOrigen)

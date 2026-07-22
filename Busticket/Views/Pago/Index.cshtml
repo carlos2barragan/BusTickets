@@ -71,6 +71,32 @@
                         <input type="hidden" name="Asientos" value="@asiento" />
                     }
 
+                    <!-- Datos del pasajero -->
+                    <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-400 mb-1 pt-1">Datos del pasajero</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">
+                                N.º de documento
+                            </label>
+                            <input type="text" name="DocumentoPasajero" id="inputDocumento" required
+                                   placeholder="Ej. 1234567890"
+                                   class="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-800
+                                          bg-gray-50 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition">
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">
+                                Teléfono
+                            </label>
+                            <input type="tel" name="TelefonoPasajero" id="inputTelefono" required
+                                   placeholder="Ej. 3001234567"
+                                   class="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-800
+                                          bg-gray-50 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition">
+                        </div>
+                    </div>
+
+                    <div class="h-px bg-gray-100"></div>
+                    <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-400 mb-1">Datos de pago</h2>
+
                     <!-- Nombre -->
                     <div>
                         <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">
@@ -328,11 +354,16 @@
     }
 
     function validarTarjeta() {
+        const documento = document.getElementById('inputDocumento').value.trim();
+        const telefono  = document.getElementById('inputTelefono').value.trim();
         const nombre   = document.getElementById('inputNombre').value.trim();
         const numero   = document.getElementById('inputTarjeta').value.replace(/\s/g, '');
         const validez  = document.getElementById('inputValidez').value.replace(/\s/g, '');
         const cvc      = document.getElementById('inputCVC').value.trim();
 
+        if (!documento) return 'Ingresa el número de documento del pasajero.';
+        if (!telefono || !/^\d{7,15}$/.test(telefono.replace(/\s/g, '')))
+            return 'Ingresa un teléfono válido (solo dígitos).';
         if (!nombre) return 'Ingresa el nombre del titular.';
         if (numero.length !== 16 || !/^\d+$/.test(numero))
             return 'El número de tarjeta debe tener 16 dígitos.';

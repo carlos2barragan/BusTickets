@@ -10,13 +10,16 @@ public class CuentaController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly UserManager<IdentityUser> _userManager;
+    private readonly IConfiguration _config;
 
     public CuentaController(
         ApplicationDbContext context,
-        UserManager<IdentityUser> userManager)
+        UserManager<IdentityUser> userManager,
+        IConfiguration config)
     {
         _context = context;
         _userManager = userManager;
+        _config = config;
     }
 
     // ==========================
@@ -37,12 +40,14 @@ public class CuentaController : Controller
 
             if (user != null)
             {
+                var identityToken = await _userManager.GeneratePasswordResetTokenAsync(user);
                 var token = Guid.NewGuid();
 
                 _context.PasswordReset.Add(new PasswordReset
                 {
                     UsuarioId = user.Id,
                     Token = token,
+                    IdentityToken = identityToken,
                     FechaExpiracion = DateTime.Now.AddMinutes(30)
                 });
 
@@ -55,7 +60,7 @@ public class CuentaController : Controller
                     Request.Scheme
                 );
 
-                EnviarCorreo(email, link); // 👈 AQUÍ ESTÁ FALLANDO
+                await EnviarCorreoAsync(email, link);
             }
 
             ViewBag.Mensaje =
@@ -117,14 +122,10 @@ public class CuentaController : Controller
         if (user == null)
             return BadRequest("Usuario no encontrado");
 
-        // 🔐 Cambiar contraseña (IDENTITY CORRECTO)
-        var identityToken =
-            await _userManager.GeneratePasswordResetTokenAsync(user);
-
         var result =
             await _userManager.ResetPasswordAsync(
                 user,
-                identityToken,
+                reset.IdentityToken ?? await _userManager.GeneratePasswordResetTokenAsync(user),
                 password
             );
 
@@ -140,7 +141,7 @@ public class CuentaController : Controller
 
         return RedirectToAction("Login", "Cuenta");
     }
-    private void EnviarCorreo(string destino, string link)
+    private async Task EnviarCorreoAsync(string destino, string link)
     {
         try
         {
@@ -200,17 +201,16 @@ public class CuentaController : Controller
             // Indica que el cuerpo es HTML
             mail.IsBodyHtml = true;
 
+            var correoEmisor = _config["Email:Correo"];
+            var clave = _config["Email:Clave"];
 
             var smtp = new SmtpClient("smtp.gmail.com", 587)
             {
-                Credentials = new NetworkCredential(
-                    "bcarlosans804@gmail.com",
-                    "njhbletvyrfnhsyl"
-                ),
+                Credentials = new NetworkCredential(correoEmisor, clave),
                 EnableSsl = true
             };
 
-            smtp.Send(mail);
+            await smtp.SendMailAsync(mail);
         }
         catch (Exception ex)
         {

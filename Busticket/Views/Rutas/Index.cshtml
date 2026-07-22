@@ -8,7 +8,7 @@
 <partial name="_DarkModeScript" />
 
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -111,18 +111,25 @@
             padding: 28px 24px;
             z-index: 2;
         }
-        .card-city { font-size: 1.35rem; font-weight: 700; color: #fff; line-height: 1.1; }
+        .card-city { font-size: 1.35rem; font-weight: 700; color: #fff !important; line-height: 1.1; }
         .card-cta {
             display: inline-flex; align-items: center; gap: 6px;
             margin-top: 12px;
             font-size: 12px; font-weight: 600;
-            color: rgba(255,255,255,.0);
+            color: rgba(255,255,255,.0) !important;
             transform: translateY(10px);
             transition: color .3s, transform .3s;
         }
         .card-cta svg { transition: transform .3s; }
-        .dest-card:hover .card-cta { color: rgba(255,255,255,.9); transform: translateY(0); }
+        .dest-card:hover .card-cta { color: rgba(255,255,255,.9) !important; transform: translateY(0); }
         .dest-card:hover .card-cta svg { transform: translateX(4px); }
+        .card-body,
+        .card-body p,
+        .price-badge,
+        .dest-card h3,
+        .dest-card h1, .dest-card h2, .dest-card h4, .dest-card h5, .dest-card h6,
+        .dest-card span,
+        .dest-card a { color: #fff !important; }
 
         /* glow line inferior */
         .card-glow {
@@ -153,9 +160,9 @@
             padding: 6px 18px;
             font-size: 12px;
             font-weight: 500;
-            color: rgba(255,255,255,.6);
+            color: rgba(255,255,255,.6) !important;
         }
-        .stat-pill span { color: #a78bfa; font-weight: 700; }
+        .stat-pill span { color: #a78bfa !important; font-weight: 700; }
     </style>
 </head>
 

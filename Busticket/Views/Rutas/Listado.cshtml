@@ -338,23 +338,16 @@
 <script>
 const rutas = @Html.Raw(rutasJson);
 
-// ── Iconos personalizados ─────────────────────────────────────────
-function pinIcon(color, label) {
+// ── Iconos personalizados (solo puntos de color, sin texto) ────────
+function pinIcon(color) {
     return L.divIcon({
         className: '',
         html: `<div style="
-            display:flex;flex-direction:column;align-items:center;gap:2px;
-            font-family:'Inter',sans-serif">
-          <div style="
-            background:${color};color:#fff;font-size:10px;font-weight:600;
-            padding:2px 7px;border-radius:999px;white-space:nowrap;
-            box-shadow:0 2px 8px ${color}66">${label}</div>
-          <div style="width:8px;height:8px;background:${color};
-            border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px ${color}88;
-            margin-top:1px"></div>
-        </div>`,
-        iconSize: [80, 34],
-        iconAnchor: [40, 34]
+            width:14px;height:14px;background:${color};
+            border-radius:50%;border:3px solid #fff;
+            box-shadow:0 2px 8px ${color}66"></div>`,
+        iconSize: [14, 14],
+        iconAnchor: [7, 7]
     });
 }
 
@@ -391,43 +384,50 @@ async function fetchRoadRoute(lat1, lng1, lat2, lng2) {
 }
 
 // ── Dibujar rutas en el mapa ─────────────────────────────────────
-const routeLayers  = {};   // id -> { line, origin, dest }
-const cityMarkers  = {};   // key -> marker
+const routeLayers  = {};   // id -> [{ line, shadow, r, map, oKey, dKey }]
+const allMarkers   = {};   // coordKey -> { marker, routeIds: [] }
 
 async function populateMap(m) {
     const valid = rutas.filter(r => r.origenLat && r.origenLng && r.destinoLat && r.destinoLng);
+    const cityMarkers = {};
 
     if (!valid.length) { m.setView([4.6, -74.1], 6); return; }
 
     const allPoints = [];
 
     for (const r of valid) {
-        // Marcadores (una sola vez por ciudad)
         const oKey = `${r.origenLat},${r.origenLng}`;
         const dKey = `${r.destinoLat},${r.destinoLng}`;
 
         if (!cityMarkers[oKey]) {
-            cityMarkers[oKey] = L.marker([r.origenLat, r.origenLng], { icon: pinIcon('#4f46e5', r.origen) })
+            const marker = L.marker([r.origenLat, r.origenLng], { icon: pinIcon('#4f46e5'), opacity: 0 })
                 .addTo(m)
                 .bindPopup(`<div class="custom-popup"><div class="city">${r.origen}</div><div class="label">Origen</div></div>`);
+            cityMarkers[oKey] = marker;
+            if (!allMarkers[oKey]) allMarkers[oKey] = { marker, routeIds: [] };
+            allMarkers[oKey].marker = marker;
         }
         if (!cityMarkers[dKey]) {
-            cityMarkers[dKey] = L.marker([r.destinoLat, r.destinoLng], { icon: pinIcon('#7c3aed', r.destino) })
+            const marker = L.marker([r.destinoLat, r.destinoLng], { icon: pinIcon('#7c3aed'), opacity: 0 })
                 .addTo(m)
                 .bindPopup(`<div class="custom-popup"><div class="city">${r.destino}</div><div class="label">Destino</div></div>`);
+            cityMarkers[dKey] = marker;
+            if (!allMarkers[dKey]) allMarkers[dKey] = { marker, routeIds: [] };
+            allMarkers[dKey].marker = marker;
         }
+        if (!allMarkers[oKey].routeIds.includes(r.id)) allMarkers[oKey].routeIds.push(r.id);
+        if (!allMarkers[dKey].routeIds.includes(r.id)) allMarkers[dKey].routeIds.push(r.id);
 
         allPoints.push([r.origenLat, r.origenLng], [r.destinoLat, r.destinoLng]);
 
-        // Obtener ruta por carretera
         const coords = await fetchRoadRoute(r.origenLat, r.origenLng, r.destinoLat, r.destinoLng);
         const lineCoords = coords ?? [[r.origenLat, r.origenLng], [r.destinoLat, r.destinoLng]];
 
-        // Línea "sombra" + línea principal
-        const shadow = L.polyline(lineCoords, { color: '#818cf8', weight: 7, opacity: 0.15 }).addTo(m);
-        const line   = L.polyline(lineCoords, { color: '#6366f1', weight: 3.5, opacity: 0.85 }).addTo(m);
+        const shadow = L.polyline(lineCoords, { color: '#818cf8', weight: 7, opacity: 0 }).addTo(m);
+        const line   = L.polyline(lineCoords, { color: '#6366f1', weight: 3.5, opacity: 0 }).addTo(m);
 
-        routeLayers[r.id] = { line, shadow, r };
+        if (!routeLayers[r.id]) routeLayers[r.id] = [];
+        routeLayers[r.id].push({ line, shadow, r, map: m, oKey, dKey });
     }
 
     m.fitBounds(allPoints, { padding: [60, 60], animate: true });
@@ -441,47 +441,69 @@ if (document.getElementById('map')) {
 }
 
 // ── Mobile ────────────────────────────────────────────────────────
+let mobileMap = null;
 if (document.getElementById('map-mobile')) {
-    const mobileMap = buildMap('map-mobile');
+    mobileMap = buildMap('map-mobile');
     populateMap(mobileMap);
 }
 
 // ── Interacción lista → mapa ──────────────────────────────────────
+function hideAllRoutes() {
+    for (const layers of Object.values(routeLayers)) {
+        layers.forEach(l => {
+            l.line.setStyle({ color: '#6366f1', weight: 3.5, opacity: 0 });
+            l.shadow.setStyle({ opacity: 0 });
+        });
+    }
+    for (const entry of Object.values(allMarkers)) {
+        if (entry.marker) entry.marker.setOpacity(0);
+    }
+}
+
+function showOnlyRoute(id) {
+    const layers = routeLayers[id];
+    if (!layers) return;
+    const shownCities = new Set();
+    layers.forEach(l => {
+        l.line.setStyle({ color: '#4f46e5', weight: 5, opacity: 1 });
+        l.shadow.setStyle({ opacity: 0.25 });
+        if (!shownCities.has(l.oKey)) {
+            shownCities.add(l.oKey);
+            if (allMarkers[l.oKey]?.marker) allMarkers[l.oKey].marker.setOpacity(1);
+        }
+        if (!shownCities.has(l.dKey)) {
+            shownCities.add(l.dKey);
+            if (allMarkers[l.dKey]?.marker) allMarkers[l.dKey].marker.setOpacity(1);
+        }
+    });
+}
+
 function highlightRoute(id) {
-    const layer = routeLayers[id];
-    if (!layer || !desktopMap) return;
-    layer.line.setStyle({ color: '#4f46e5', weight: 5, opacity: 1 });
-    layer.shadow.setStyle({ opacity: 0.25 });
+    hideAllRoutes();
+    showOnlyRoute(id);
 }
 
 function unhighlightRoute(id) {
     const card = document.getElementById('card-' + id);
     if (card?.classList.contains('active')) return;
-    const layer = routeLayers[id];
-    if (!layer) return;
-    layer.line.setStyle({ color: '#6366f1', weight: 3.5, opacity: 0.85 });
-    layer.shadow.setStyle({ opacity: 0.15 });
+    hideAllRoutes();
 }
 
 function focusRoute(id) {
-    // Limpiar selección anterior
     document.querySelectorAll('.route-card').forEach(c => c.classList.remove('active'));
-    Object.values(routeLayers).forEach(({ line, shadow }) => {
-        line.setStyle({ color: '#6366f1', weight: 3.5, opacity: 0.85 });
-        shadow.setStyle({ opacity: 0.15 });
-    });
-
-    // Activar
     document.getElementById('card-' + id)?.classList.add('active');
-    const layer = routeLayers[id];
-    if (layer && desktopMap) {
-        layer.line.setStyle({ color: '#4f46e5', weight: 5, opacity: 1 });
-        layer.shadow.setStyle({ opacity: 0.28 });
-        const { r } = layer;
-        desktopMap.fitBounds(
-            [[r.origenLat, r.origenLng], [r.destinoLat, r.destinoLng]],
-            { padding: [80, 80], animate: true, duration: 0.7 }
-        );
+    hideAllRoutes();
+    showOnlyRoute(id);
+    const layers = routeLayers[id];
+    if (layers && layers.length > 0) {
+        const { r } = layers[0];
+        const map = desktopMap || mobileMap;
+        if (map) {
+            map.fitBounds(
+                [[r.origenLat, r.origenLng], [r.destinoLat, r.destinoLng]],
+                { padding: [80, 80], animate: true, duration: 0.7 }
+            );
+        }
     }
 }
 

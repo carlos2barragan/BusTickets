@@ -11,7 +11,9 @@
         origenLng  = r.CiudadOrigen?.Lng ?? 0,
         destino    = r.CiudadDestino?.Nombre ?? "",
         destinoLat = r.CiudadDestino?.Lat ?? 0,
-        destinoLng = r.CiudadDestino?.Lng ?? 0
+        destinoLng = r.CiudadDestino?.Lng ?? 0,
+        duracion   = r.DuracionMin,
+        precio     = r.Precio
     }));
 }
 
@@ -278,16 +280,16 @@
             <div class="absolute bottom-6 left-6 z-[999] bg-white/90 backdrop-blur-sm
                         rounded-2xl px-4 py-3 shadow-lg border border-gray-100 text-xs text-gray-600 space-y-1.5">
                 <div class="flex items-center gap-2">
-                    <span class="w-3 h-3 rounded-full bg-indigo-500 flex-shrink-0"></span>
+                    <span class="w-3 h-3 rounded-full bg-emerald-500 flex-shrink-0"></span>
                     <span>Ciudad origen</span>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="w-3 h-3 rounded-full bg-violet-500 flex-shrink-0"></span>
+                    <span class="w-3 h-3 rounded-full bg-red-500 flex-shrink-0"></span>
                     <span>Ciudad destino</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="w-5 border-t-2 border-indigo-400 border-dashed flex-shrink-0"></span>
-                    <span>Ruta en carretera</span>
+                    <span>Ruta</span>
                 </div>
             </div>
         </div>
@@ -338,16 +340,49 @@
 <script>
 const rutas = @Html.Raw(rutasJson);
 
-// ── Iconos personalizados (solo puntos de color, sin texto) ────────
-function pinIcon(color) {
+// ── Iconos personalizados ─────────────────────────────────────────
+function originIcon(city) {
     return L.divIcon({
         className: '',
-        html: `<div style="
-            width:14px;height:14px;background:${color};
-            border-radius:50%;border:3px solid #fff;
-            box-shadow:0 2px 8px ${color}66"></div>`,
-        iconSize: [14, 14],
-        iconAnchor: [7, 7]
+        html: `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;font-family:'Inter',sans-serif">
+            <div style="background:#10b981;color:#fff;font-size:13px;font-weight:600;padding:4px 12px;border-radius:999px;white-space:nowrap;display:flex;align-items:center;gap:5px;box-shadow:0 3px 14px rgba(16,185,129,.45)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                ${city}
+            </div>
+            <div style="width:12px;height:12px;background:#10b981;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(16,185,129,.6)"></div>
+        </div>`,
+        iconSize: [130, 48],
+        iconAnchor: [65, 48]
+    });
+}
+
+function destIcon(city) {
+    return L.divIcon({
+        className: '',
+        html: `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;font-family:'Inter',sans-serif">
+            <div style="background:#ef4444;color:#fff;font-size:13px;font-weight:600;padding:4px 12px;border-radius:999px;white-space:nowrap;display:flex;align-items:center;gap:5px;box-shadow:0 3px 14px rgba(239,68,68,.45)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                ${city}
+            </div>
+            <div style="width:12px;height:12px;background:#ef4444;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(239,68,68,.6)"></div>
+        </div>`,
+        iconSize: [130, 48],
+        iconAnchor: [65, 48]
+    });
+}
+
+function durationBadge(minutes) {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    const time = h > 0 ? `${h}h ${m}m` : `${m} min`;
+    return L.divIcon({
+        className: '',
+        html: `<div style="background:#fff;color:#374151;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.14);border:1px solid #e5e7eb;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:4px">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            ${time}
+        </div>`,
+        iconSize: [80, 26],
+        iconAnchor: [40, 13]
     });
 }
 
@@ -384,8 +419,8 @@ async function fetchRoadRoute(lat1, lng1, lat2, lng2) {
 }
 
 // ── Dibujar rutas en el mapa ─────────────────────────────────────
-const routeLayers  = {};   // id -> [{ line, shadow, r, map, oKey, dKey }]
-const allMarkers   = {};   // coordKey -> { marker, routeIds: [] }
+const routeLayers  = {};   // id -> [{ line, shadow, durationMarker, r, map, oKey, dKey }]
+const allMarkers   = {};   // coordKey -> [marker, ...] (uno por mapa)
 
 async function populateMap(m) {
     const valid = rutas.filter(r => r.origenLat && r.origenLng && r.destinoLat && r.destinoLng);
@@ -400,34 +435,39 @@ async function populateMap(m) {
         const dKey = `${r.destinoLat},${r.destinoLng}`;
 
         if (!cityMarkers[oKey]) {
-            const marker = L.marker([r.origenLat, r.origenLng], { icon: pinIcon('#4f46e5'), opacity: 0 })
+            const marker = L.marker([r.origenLat, r.origenLng], { icon: originIcon(r.origen), opacity: 0 })
                 .addTo(m)
                 .bindPopup(`<div class="custom-popup"><div class="city">${r.origen}</div><div class="label">Origen</div></div>`);
             cityMarkers[oKey] = marker;
-            if (!allMarkers[oKey]) allMarkers[oKey] = { marker, routeIds: [] };
-            allMarkers[oKey].marker = marker;
+            if (!allMarkers[oKey]) allMarkers[oKey] = [];
+            allMarkers[oKey].push(marker);
         }
         if (!cityMarkers[dKey]) {
-            const marker = L.marker([r.destinoLat, r.destinoLng], { icon: pinIcon('#7c3aed'), opacity: 0 })
+            const marker = L.marker([r.destinoLat, r.destinoLng], { icon: destIcon(r.destino), opacity: 0 })
                 .addTo(m)
                 .bindPopup(`<div class="custom-popup"><div class="city">${r.destino}</div><div class="label">Destino</div></div>`);
             cityMarkers[dKey] = marker;
-            if (!allMarkers[dKey]) allMarkers[dKey] = { marker, routeIds: [] };
-            allMarkers[dKey].marker = marker;
+            if (!allMarkers[dKey]) allMarkers[dKey] = [];
+            allMarkers[dKey].push(marker);
         }
-        if (!allMarkers[oKey].routeIds.includes(r.id)) allMarkers[oKey].routeIds.push(r.id);
-        if (!allMarkers[dKey].routeIds.includes(r.id)) allMarkers[dKey].routeIds.push(r.id);
 
         allPoints.push([r.origenLat, r.origenLng], [r.destinoLat, r.destinoLng]);
 
         const coords = await fetchRoadRoute(r.origenLat, r.origenLng, r.destinoLat, r.destinoLng);
         const lineCoords = coords ?? [[r.origenLat, r.origenLng], [r.destinoLat, r.destinoLng]];
 
+        // Punto medio para badge de duración
+        const midIdx = Math.floor(lineCoords.length / 2);
+        const mid = lineCoords[midIdx];
+
         const shadow = L.polyline(lineCoords, { color: '#818cf8', weight: 7, opacity: 0 }).addTo(m);
         const line   = L.polyline(lineCoords, { color: '#6366f1', weight: 3.5, opacity: 0 }).addTo(m);
+        const durationMarker = r.duracion > 0
+            ? L.marker(mid, { icon: durationBadge(r.duracion), opacity: 0, interactive: false }).addTo(m)
+            : null;
 
         if (!routeLayers[r.id]) routeLayers[r.id] = [];
-        routeLayers[r.id].push({ line, shadow, r, map: m, oKey, dKey });
+        routeLayers[r.id].push({ line, shadow, durationMarker, r, map: m, oKey, dKey });
     }
 
     m.fitBounds(allPoints, { padding: [60, 60], animate: true });
@@ -453,10 +493,11 @@ function hideAllRoutes() {
         layers.forEach(l => {
             l.line.setStyle({ color: '#6366f1', weight: 3.5, opacity: 0 });
             l.shadow.setStyle({ opacity: 0 });
+            if (l.durationMarker) l.durationMarker.setOpacity(0);
         });
     }
-    for (const entry of Object.values(allMarkers)) {
-        if (entry.marker) entry.marker.setOpacity(0);
+    for (const markers of Object.values(allMarkers)) {
+        markers.forEach(m => m.setOpacity(0));
     }
 }
 
@@ -467,13 +508,16 @@ function showOnlyRoute(id) {
     layers.forEach(l => {
         l.line.setStyle({ color: '#4f46e5', weight: 5, opacity: 1 });
         l.shadow.setStyle({ opacity: 0.25 });
+        if (l.durationMarker) l.durationMarker.setOpacity(1);
         if (!shownCities.has(l.oKey)) {
             shownCities.add(l.oKey);
-            if (allMarkers[l.oKey]?.marker) allMarkers[l.oKey].marker.setOpacity(1);
+            const markers = allMarkers[l.oKey];
+            if (markers) markers.forEach(m => m.setOpacity(1));
         }
         if (!shownCities.has(l.dKey)) {
             shownCities.add(l.dKey);
-            if (allMarkers[l.dKey]?.marker) allMarkers[l.dKey].marker.setOpacity(1);
+            const markers = allMarkers[l.dKey];
+            if (markers) markers.forEach(m => m.setOpacity(1));
         }
     });
 }

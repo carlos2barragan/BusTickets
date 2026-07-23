@@ -102,7 +102,15 @@ namespace Busticket.Controllers
                 return View(ruta);
             }
 
-            _context.Ruta.Update(ruta);
+            var existingRuta = await _context.Ruta.FindAsync(ruta.RutaId);
+            if (existingRuta == null)
+                return NotFound();
+
+            existingRuta.CiudadOrigenId = ruta.CiudadOrigenId;
+            existingRuta.CiudadDestinoId = ruta.CiudadDestinoId;
+            existingRuta.Precio = ruta.Precio;
+            existingRuta.DuracionMin = ruta.DuracionMin;
+
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "Ruta actualizada correctamente";

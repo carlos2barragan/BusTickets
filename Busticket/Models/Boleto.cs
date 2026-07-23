@@ -31,5 +31,9 @@ namespace Busticket.Models
 
         // 🔑 CÓDIGO DE BOLETO
         public required string Codigo { get; set; }
+
+        // 👤 DATOS DEL PASAJERO
+        public string? DocumentoPasajero { get; set; }
+        public string? TelefonoPasajero { get; set; }
     }
 }

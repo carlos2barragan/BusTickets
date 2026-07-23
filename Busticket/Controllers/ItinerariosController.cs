@@ -1,6 +1,7 @@
 ﻿using Busticket.Data;
 using Microsoft.AspNetCore.Mvc;
-using Busticket.DTOs;
+using Microsoft.EntityFrameworkCore;
+
 namespace Busticket.Controllers
 {
     public class ItinerariosController : Controller
@@ -12,10 +13,18 @@ namespace Busticket.Controllers
             _context = context;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            // ✅ Error 500 simulado (se captura por UseExceptionHandler)
-            throw new Exception("Error interno simulado en Itinerarios");
+            var itinerarios = await _context.Itinerario
+                .Include(i => i.Ruta)
+                    .ThenInclude(r => r.CiudadOrigen)
+                .Include(i => i.Ruta)
+                    .ThenInclude(r => r.CiudadDestino)
+                .Include(i => i.Bus)
+                .Include(i => i.Conductor)
+                .ToListAsync();
+
+            return View(itinerarios);
         }
     }
 }

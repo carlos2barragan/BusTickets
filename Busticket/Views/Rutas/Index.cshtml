@@ -3,96 +3,218 @@
 @{
     ViewBag.Title = "Rutas";
     Layout = null;
-
     var destinoSeleccionado = Context.Request.Query["destino"].ToString();
 }
 <partial name="_DarkModeScript" />
 
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Busticket | Destinos</title>
     <link href="~/css/ModeDark.css" rel="stylesheet">
-
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #06070f; color: #f1f5f9; overflow-x: hidden; }
 
-        @@keyframes fadeUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        .fade-up { animation: fadeUp .6s ease-out forwards; }
-
-        .header-scrolled {
-            background: rgba(255,255,255,0.85) !important;
-            backdrop-filter: blur(16px);
-            box-shadow: 0 1px 0 rgba(0,0,0,0.06);
-        }
+        /* ── HEADER ── */
         .profile-dropdown { display: none; }
         .profile-dropdown.open { display: block; }
+        #header { transition: all .4s; }
+        .header-scrolled { background: rgba(6,7,15,.92) !important; backdrop-filter: blur(20px); box-shadow: 0 1px 0 rgba(255,255,255,.06); }
+
+        /* ── ORBS (fondo animado) ── */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: .35;
+            animation: orbFloat linear infinite;
+            pointer-events: none;
+        }
+        @@keyframes orbFloat {
+            0%   { transform: translate(0,0) scale(1); }
+            33%  { transform: translate(40px,-60px) scale(1.12); }
+            66%  { transform: translate(-30px,30px) scale(.9); }
+            100% { transform: translate(0,0) scale(1); }
+        }
+
+        /* ── GRADIENT TEXT ── */
+        .grad-text {
+            background: linear-gradient(135deg, #a78bfa 0%, #818cf8 40%, #38bdf8 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradShift 5s ease infinite;
+        }
+        @@keyframes gradShift {
+            0%,100% { background-position: 0% 50%; }
+            50%      { background-position: 100% 50%; }
+        }
+
+        /* ── CARDS 3D ── */
+        .dest-card {
+            position: relative;
+            height: 360px;
+            border-radius: 24px;
+            overflow: hidden;
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transition: box-shadow .4s, transform .12s ease-out;
+            will-change: transform;
+            background: #111827;
+        }
+        .dest-card:hover {
+            box-shadow: 0 30px 70px rgba(99,102,241,.35), 0 0 0 1px rgba(129,140,248,.25);
+        }
+        .dest-card img {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transition: transform .7s cubic-bezier(.25,.46,.45,.94), filter .4s;
+        }
+        .dest-card:hover img { transform: scale(1.1); filter: brightness(.85); }
+
+        /* overlay base */
+        .dest-card .overlay {
+            position: absolute; inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,.85) 0%, rgba(0,0,0,.3) 50%, transparent 100%);
+            transition: background .4s;
+            z-index: 1;
+        }
+        .dest-card:hover .overlay {
+            background: linear-gradient(to top, rgba(67,56,202,.75) 0%, rgba(0,0,0,.45) 60%, transparent 100%);
+        }
+
+        /* glass badge precio */
+        .price-badge {
+            position: absolute; top: 16px; right: 16px; z-index: 3;
+            background: rgba(255,255,255,.12);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,.2);
+            border-radius: 99px;
+            padding: 5px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #fff;
+            transition: background .3s;
+        }
+        .dest-card:hover .price-badge { background: rgba(129,140,248,.45); border-color: rgba(129,140,248,.5); }
+
+        /* texto inferior */
+        .card-body {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            padding: 28px 24px;
+            z-index: 2;
+        }
+        .card-city { font-size: 1.35rem; font-weight: 700; color: #fff !important; line-height: 1.1; }
+        .card-cta {
+            display: inline-flex; align-items: center; gap: 6px;
+            margin-top: 12px;
+            font-size: 12px; font-weight: 600;
+            color: rgba(255,255,255,.0) !important;
+            transform: translateY(10px);
+            transition: color .3s, transform .3s;
+        }
+        .card-cta svg { transition: transform .3s; }
+        .dest-card:hover .card-cta { color: rgba(255,255,255,.9) !important; transform: translateY(0); }
+        .dest-card:hover .card-cta svg { transform: translateX(4px); }
+        .card-body,
+        .card-body p,
+        .price-badge,
+        .dest-card h3,
+        .dest-card h1, .dest-card h2, .dest-card h4, .dest-card h5, .dest-card h6,
+        .dest-card span,
+        .dest-card a { color: #fff !important; }
+
+        /* glow line inferior */
+        .card-glow {
+            position: absolute; bottom: 0; left: 0; right: 0; height: 3px; z-index: 4;
+            background: linear-gradient(90deg, #6366f1, #a78bfa, #38bdf8);
+            transform: scaleX(0);
+            transition: transform .4s cubic-bezier(.25,.46,.45,.94);
+            transform-origin: left;
+        }
+        .dest-card:hover .card-glow { transform: scaleX(1); }
+
+        /* ── ENTRADA ESCALONADA ── */
+        .card-enter {
+            opacity: 0;
+            transform: perspective(900px) rotateX(12deg) translateY(50px);
+            transition: opacity .6s ease, transform .6s cubic-bezier(.22,1,.36,1);
+        }
+        .card-enter.visible {
+            opacity: 1;
+            transform: perspective(900px) rotateX(0) translateY(0);
+        }
+
+        /* ── STAT PILL ── */
+        .stat-pill {
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: 99px;
+            padding: 6px 18px;
+            font-size: 12px;
+            font-weight: 500;
+            color: rgba(255,255,255,.6) !important;
+        }
+        .stat-pill span { color: #a78bfa !important; font-weight: 700; }
     </style>
 </head>
 
-<!-- HEADER -->
-<header id="header" class="fixed top-0 inset-x-0 z-50 transition-all duration-300 bg-white/80 backdrop-blur-md border-b border-gray-100">
-    <div class="max-w-7xl mx-auto px-10 py-5 flex items-center justify-between">
+<body>
 
-        <!-- IZQUIERDA: volver + logo -->
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<header id="header" class="fixed top-0 inset-x-0 z-50 bg-transparent">
+    <div class="max-w-7xl mx-auto px-6 lg:px-10 py-5 flex items-center justify-between">
+
         <div class="flex items-center gap-5">
             <button onclick="history.back()"
-                    class="flex items-center gap-1.5 text-xs tracking-widest uppercase text-gray-500
-                           hover:text-gray-900 transition-colors group">
-                <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform duration-200"
+                    class="flex items-center gap-1.5 text-xs tracking-widest uppercase text-white/50
+                           hover:text-white transition-colors group">
+                <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform"
                      fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
                 </svg>
                 Volver
             </button>
-            <div class="w-px h-4 bg-gray-200"></div>
-            <a href="/Home/Index" class="text-xl tracking-widest uppercase font-semibold text-gray-900">
-                Busticket
-            </a>
+            <div class="w-px h-4 bg-white/20"></div>
+            <a href="/Home/Index" class="text-xl tracking-widest uppercase font-semibold text-white">Busticket</a>
         </div>
 
-        <!-- DERECHA -->
-        <nav class="hidden md:flex gap-8 text-xs tracking-widest uppercase items-center text-gray-700">
-            <a href="/Ayuda"
-               class="relative after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-px
-                      after:bg-gray-900 after:transition-all after:duration-300 hover:after:w-full hover:text-gray-900 transition-colors">
-                Ayuda
-            </a>
+        <nav class="hidden md:flex gap-8 text-xs tracking-widest uppercase items-center text-white/60">
+            <a href="/Ayuda" class="hover:text-white transition-colors">Ayuda</a>
 
             @if (User.Identity != null && User.Identity.IsAuthenticated)
             {
                 <div class="relative" id="profileWrapper">
                     <button onclick="toggleDropdown()"
-                            class="flex items-center justify-center w-9 h-9 rounded-full border border-gray-300
-                                   hover:bg-gray-900 hover:text-white hover:border-gray-900 transition-all duration-200">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                            class="flex items-center justify-center w-9 h-9 rounded-full border border-white/25
+                                   hover:border-white/70 hover:bg-white/10 transition-all">
+                        <svg class="w-4 h-4 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                         </svg>
                     </button>
-
                     <div id="profileDropdown"
-                         class="profile-dropdown absolute right-0 mt-3 w-48 bg-white border border-gray-100
-                                rounded-2xl overflow-hidden shadow-xl shadow-gray-200/60">
+                         class="profile-dropdown absolute right-0 mt-3 w-48 bg-[#0f1120] border border-white/10
+                                rounded-2xl overflow-hidden shadow-2xl">
                         <a href="/Perfil"
-                           class="flex items-center gap-3 px-5 py-3.5 text-sm text-gray-700 hover:bg-gray-50
-                                  transition-colors normal-case tracking-normal font-normal">
-                            <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                           class="flex items-center gap-3 px-5 py-3.5 text-sm text-white/70 hover:bg-white/5
+                                  hover:text-white transition-colors normal-case tracking-normal font-normal">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                             </svg>
                             Mi perfil
                         </a>
-                        <div class="h-px bg-gray-100"></div>
+                        <div class="h-px bg-white/8"></div>
                         <form asp-controller="Auth" asp-action="Logout" method="post">
                             <button type="submit"
-                                    class="w-full flex items-center gap-3 px-5 py-3.5 text-sm text-red-500
-                                           hover:bg-red-50 transition-colors normal-case tracking-normal font-normal">
+                                    class="w-full flex items-center gap-3 px-5 py-3.5 text-sm text-red-400
+                                           hover:bg-red-500/10 transition-colors normal-case tracking-normal font-normal">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                                 </svg>
@@ -104,39 +226,27 @@
             }
             else
             {
-                <a href="/Auth/Login"
-                   class="relative after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-px
-                          after:bg-gray-900 after:transition-all after:duration-300 hover:after:w-full hover:text-gray-900 transition-colors">
-                    Iniciar sesión
-                </a>
+                <a href="/Auth/Login" class="hover:text-white transition-colors">Iniciar sesión</a>
             }
 
             @if (User.IsInRole("Admin"))
             {
-                <a href="/Admin/Index"
-                   class="relative after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-px
-                          after:bg-gray-900 after:transition-all after:duration-300 hover:after:w-full hover:text-gray-900 transition-colors">
-                    Admin
-                </a>
+                <a href="/Admin/Index" class="hover:text-white transition-colors">Admin</a>
             }
             @if (User.IsInRole("Empresa"))
             {
-                <a href="/PanelEmpresa/Index"
-                   class="relative after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-px
-                          after:bg-gray-900 after:transition-all after:duration-300 hover:after:w-full hover:text-gray-900 transition-colors">
-                    Empresa
-                </a>
+                <a href="/PanelEmpresa/Index" class="hover:text-white transition-colors">Empresa</a>
             }
         </nav>
 
-        <button id="menuBtn" class="md:hidden text-xl text-gray-700 z-50">☰</button>
+        <button id="menuBtn" class="md:hidden text-white text-2xl z-50">☰</button>
     </div>
 </header>
 
 <!-- MENÚ MÓVIL -->
-<div id="mobileMenu" class="fixed inset-0 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center
-        space-y-8 uppercase tracking-widest text-lg transform -translate-y-full
-        transition-transform duration-500 md:hidden z-40 text-white">
+<div id="mobileMenu" class="fixed inset-0 bg-black/95 backdrop-blur-lg flex flex-col items-center justify-center
+     space-y-8 uppercase tracking-widest text-lg transform -translate-y-full
+     transition-transform duration-500 md:hidden z-40 text-white">
     <a href="/Ayuda">Ayuda</a>
     @if (User.Identity != null && User.Identity.IsAuthenticated)
     {
@@ -150,131 +260,171 @@
     @if (User.IsInRole("Empresa")) { <a href="/PanelEmpresa/Index">Empresa</a> }
 </div>
 
-<body class="bg-[#f7f8fa] text-gray-800">
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<section class="relative min-h-[55vh] flex items-center justify-center overflow-hidden pt-24 pb-16">
 
-  
-    
-    <!-- CONTENIDO -->
-    <main class="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 pt-28 pb-16">
+    <!-- Orbs de fondo -->
+    <div class="orb w-[500px] h-[500px] bg-indigo-600 top-[-100px] left-[-100px]" style="animation-duration:14s"></div>
+    <div class="orb w-[400px] h-[400px] bg-violet-600 bottom-[-80px] right-[-60px]" style="animation-duration:18s;animation-delay:-6s"></div>
+    <div class="orb w-[300px] h-[300px] bg-sky-500 top-[40%] left-[45%]" style="animation-duration:22s;animation-delay:-10s;opacity:.2"></div>
 
-        <!-- TÍTULO DINÁMICO -->
-        <div class="text-center mb-14 fade-up">
-            @if (!string.IsNullOrEmpty(destinoSeleccionado))
-            {
-                <p class="text-xs uppercase tracking-widest text-gray-500">
-                    Rutas disponibles hacia
-                </p>
-                <h1 class="text-3xl sm:text-4xl font-semibold text-gray-900 mt-2">
-                    @destinoSeleccionado
-                </h1>
+    <!-- Ruido sutil -->
+    <div class="absolute inset-0 opacity-[.03]"
+         style="background-image:url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.9%22 numOctaves=%224%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23n)%22/%3E%3C/svg%3E');
+                background-size: 200px">
+    </div>
+
+    <div class="relative z-10 text-center px-4 max-w-3xl mx-auto">
+
+        @if (!string.IsNullOrEmpty(destinoSeleccionado))
+        {
+            <h1 class="text-5xl sm:text-6xl font-black leading-none mb-4">
+                Rutas hacia<br>
+                <span class="grad-text">@destinoSeleccionado</span>
+            </h1>
+        }
+        else
+        {
+            <h1 class="text-5xl sm:text-6xl font-black leading-none mb-6">
+                Tu próximo<br>
+                <span class="grad-text">destino</span><br>
+                te espera
+            </h1>
+        }
+
+        <!-- Estadísticas rápidas -->
+        <div class="flex flex-wrap justify-center gap-3">
+            @{
+                var totalDestinos = Model.Select(r => r.CiudadDestino).Distinct().Count();
+                var precioMin = Model.Any() ? Model.Min(r => r.Precio) : 0;
             }
-            else
+            <div class="stat-pill">
+                <span>@totalDestinos</span> destinos disponibles
+            </div>
+            <div class="stat-pill">
+                Desde <span>$@precioMin.ToString("N0")</span>
+            </div>
+            <div class="stat-pill">
+                <span>100%</span> seguro
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════ GRID DESTINOS ═══════════════════════ -->
+@if (string.IsNullOrEmpty(destinoSeleccionado))
+{
+    <main class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-10 pb-24">
+
+        <div id="cardsGrid"
+             class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+
+            @{
+                var idx = 0;
+            }
+            @foreach (var grupo in Model
+                        .GroupBy(r => r.CiudadDestino)
+                        .Select(g => new {
+                            Ciudad     = g.Key,
+                            PrecioMin  = g.Min(r => r.Precio),
+                            Rutas      = g.Count(),
+                            Ejemplo    = g.First()
+                        }))
             {
-                <h1 class="text-3xl sm:text-4xl font-semibold text-gray-900">
-                    Destinos populares
-                </h1>
-                <p class="text-sm text-gray-500 mt-2">
-                    Aquí comienza tu próxima aventura
-                </p>
+                <div class="dest-card card-enter"
+                     data-city="@grupo.Ciudad.Nombre.ToLower()"
+                     style="transition-delay: @(idx * 0.07)s"
+                     onclick="location.href='/Rutas/Listado?destino=@grupo.Ciudad.Nombre'">
+
+                    <img src="@(grupo.Ejemplo.ImagenUrl ?? $"https://picsum.photos/seed/{grupo.Ciudad.Nombre}/800/600")"
+                         alt="@grupo.Ciudad.Nombre" loading="lazy" />
+
+                    <div class="overlay"></div>
+
+                    <!-- Precio -->
+                    <div class="price-badge">Desde $@grupo.PrecioMin.ToString("N0")</div>
+
+                    <!-- Texto inferior -->
+                    <div class="card-body">
+                        <p class="text-xs font-semibold uppercase tracking-widest text-white/50 mb-1">
+                            @grupo.Rutas ruta@(grupo.Rutas != 1 ? "s" : "")
+                        </p>
+                        <h3 class="card-city">@grupo.Ciudad.Nombre</h3>
+                        <div class="card-cta">
+                            Ver rutas disponibles
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="card-glow"></div>
+                </div>
+
+                idx++;
             }
         </div>
 
-        <!-- GRID DE DESTINOS -->
-        @if (string.IsNullOrEmpty(destinoSeleccionado))
-        {
-            <section class="
-            grid
-            grid-cols-1
-            sm:grid-cols-2
-            lg:grid-cols-3
-            xl:grid-cols-4
-            gap-6 lg:gap-8
-        ">
-                @{
-                    var index = 0;
-                }
-
-                @foreach (var grupo in Model
-                            .GroupBy(r => r.CiudadDestino)
-                            .Select(g => new
-                            {
-                                Ciudad = g.Key,
-                                PrecioMin = g.Min(r => r.Precio),
-                                RutaEjemplo = g.First()
-                            }))
-                {
-                    <article class="
-                            group relative
-                            h-[260px] sm:h-[300px]
-                            rounded-2xl
-                            overflow-hidden
-                            cursor-pointer
-                            shadow-md hover:shadow-2xl
-                            transition-all duration-500
-                            hover:-translate-y-1
-                            fade-up
-                        "
-                             style="animation-delay:@(index * 0.05)s"
-                             onclick="location.href='/Rutas/Listado?destino=@grupo.Ciudad.Nombre'">
-
-                        <!-- IMAGEN -->
-                        <img src="@(grupo.RutaEjemplo.ImagenUrl ??
-                                                 $"https://picsum.photos/seed/{grupo.Ciudad.Nombre}/600/400")"
-                             class="absolute inset-0 w-full h-full object-cover z-0
-                             transition-transform duration-700 group-hover:scale-110" />
-
-                        <!-- OVERLAY -->
-                        <div class="absolute inset-0 bg-gradient-to-t
-                            from-black/70 via-black/30 to-transparent z-10">
-                        </div>
-
-                        <!-- CONTENIDO TEXTO -->
-                        <div class="absolute bottom-0 w-full p-5 text-white z-20">
-
-                            <h3 class="text-lg sm:text-xl font-semibold !text-white drop-shadow-xl">
-                                @grupo.Ciudad.Nombre
-                            </h3>
-
-                            <p class="text-sm !text-white mt-1 drop-shadow-xl">
-                                Desde $@grupo.PrecioMin
-                            </p>
-
-                        </div>
-
-                    </article>
-
-                    index++;
-                }
-            </section>
-        }
 
     </main>
+}
 
-    @* Script para abrir /cerrar el menú móvil  *@
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
+<!-- ═══════════════════════ SCRIPTS ═══════════════════════ -->
+<script>
+    // ── Scroll header ──────────────────────────────────────────
+    window.addEventListener('scroll', () => {
+        document.getElementById('header').classList.toggle('header-scrolled', scrollY > 20);
+    });
 
-            const menuBtn = document.getElementById("menuBtn");
-            const mobileMenu = document.getElementById("mobileMenu");
-
-            let isOpen = false;
-
-            menuBtn.addEventListener("click", function () {
-
-                isOpen = !isOpen;
-
-                if (isOpen) {
-                    mobileMenu.classList.remove("-translate-y-full");
-                    menuBtn.textContent = "✕";
-                } else {
-                    mobileMenu.classList.add("-translate-y-full");
-                    menuBtn.textContent = "☰";
-                }
-
-            });
-
+    // ── Menú móvil ─────────────────────────────────────────────
+    (() => {
+        const btn  = document.getElementById('menuBtn');
+        const menu = document.getElementById('mobileMenu');
+        let open = false;
+        btn.addEventListener('click', () => {
+            open = !open;
+            menu.classList.toggle('-translate-y-full', !open);
+            btn.textContent = open ? '✕' : '☰';
         });
-    </script>
+    })();
+
+    // ── Dropdown perfil ────────────────────────────────────────
+    function toggleDropdown() {
+        document.getElementById('profileDropdown')?.classList.toggle('open');
+    }
+    document.addEventListener('click', e => {
+        const w = document.getElementById('profileWrapper');
+        if (w && !w.contains(e.target))
+            document.getElementById('profileDropdown')?.classList.remove('open');
+    });
+
+    // ── Intersection Observer → animación de entrada ───────────
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.card-enter').forEach(el => observer.observe(el));
+
+    // ── 3D Tilt en hover ───────────────────────────────────────
+    document.querySelectorAll('.dest-card').forEach(card => {
+        card.addEventListener('mousemove', e => {
+            const r = card.getBoundingClientRect();
+            const x = (e.clientX - r.left) / r.width  - 0.5;
+            const y = (e.clientY - r.top)  / r.height - 0.5;
+            card.style.transform =
+                `perspective(900px) rotateY(${x * 14}deg) rotateX(${-y * 14}deg) scale(1.03) translateY(-6px)`;
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'perspective(900px) rotateY(0) rotateX(0) scale(1) translateY(0)';
+        });
+    });
+
+</script>
 
 </body>
 </html>

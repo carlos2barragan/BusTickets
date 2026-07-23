@@ -75,7 +75,7 @@ namespace Busticket.Controllers
         }
 
         [HttpPost("Eliminar")]
-        [IgnoreAntiforgeryToken]
+        [ValidateAntiForgeryToken]
         public IActionResult Eliminar([FromBody] EliminarAsientoRequest request)
         {
             var carrito = HttpContext.Session.GetObjectFromJson<List<CarritoItem>>("Carrito")

@@ -122,6 +122,19 @@ namespace Busticket.Controllers
 
             try
             {
+                asientosDb = await _context.Asiento
+                    .Where(a =>
+                        asientosIds.Contains(a.AsientoId) &&
+                        a.RutaId == model.RutaId &&
+                        a.Disponible)
+                    .ToListAsync();
+
+                if (!asientosDb.Any())
+                {
+                    await transaction.RollbackAsync();
+                    return RedirectToAction("Index");
+                }
+
                 // 1️⃣ Crear venta
                 venta = new Venta
                 {
@@ -164,7 +177,9 @@ namespace Busticket.Controllers
                         Asiento = asiento,
                         Precio = ruta.Precio,
                         FechaCompra = DateTime.Now,
-                        Codigo = $"BT-{Guid.NewGuid():N}".Substring(0, 10).ToUpper()
+                        Codigo = $"BT-{Guid.NewGuid():N}".Substring(0, 10).ToUpper(),
+                        DocumentoPasajero = model.DocumentoPasajero,
+                        TelefonoPasajero = model.TelefonoPasajero
                     });
                 }
 
@@ -262,8 +277,15 @@ namespace Busticket.Controllers
 
                         // INFO
                         col.Item().Text($"Empresa: {venta.Ruta.Empresa.Nombre}");
-                        col.Item().Text($"Cliente: {venta.User.UserName}");
+                        col.Item().Text($"Pasajero: {venta.User.UserName}");
                         col.Item().Text($"Fecha: {venta.Fecha:dd/MM/yyyy}");
+
+                        var doc = venta.Boletos.FirstOrDefault()?.DocumentoPasajero;
+                        var tel = venta.Boletos.FirstOrDefault()?.TelefonoPasajero;
+                        if (!string.IsNullOrWhiteSpace(doc))
+                            col.Item().Text($"Documento: {doc}");
+                        if (!string.IsNullOrWhiteSpace(tel))
+                            col.Item().Text($"Teléfono: {tel}");
 
                         col.Item().LineHorizontal(1);
 
